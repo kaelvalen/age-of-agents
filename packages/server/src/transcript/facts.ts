@@ -12,4 +12,5 @@ export type Fact =
   | { kind: 'tool-start'; tool: string; detail?: string; messageId: string; ts: string }
   | { kind: 'usage'; messageId: string; input: number; output: number }
   | { kind: 'turn-end'; ts: string }
-  | { kind: 'tool-result'; isError: boolean; ts: string };
+  | { kind: 'tool-result'; isError: boolean; ts: string }
+  | { kind: 'awaiting'; ts: string };

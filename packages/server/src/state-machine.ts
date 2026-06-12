@@ -39,6 +39,7 @@ export class SessionTracker {
   private missionCounter = 0;
   private activeMissionId?: string;
   private errorUntil = 0;
+  private lastPrompt = { text: '', atMs: 0 };
 
   constructor(
     private readonly world: World,
@@ -75,6 +76,10 @@ export class SessionTracker {
   apply(fact: Fact): void {
     switch (fact.kind) {
       case 'prompt': {
+        // Hook i watcher widzą ten sam prompt dwoma kanałami — deduplikuj.
+        const atMs = Date.parse(fact.ts) || Date.now();
+        if (fact.text === this.lastPrompt.text && Math.abs(atMs - this.lastPrompt.atMs) < 15_000) break;
+        this.lastPrompt = { text: fact.text, atMs };
         this.missionCounter++;
         this.activeMissionId = `${this.sessionId}-m${this.missionCounter}`;
         this.world.startMission({
@@ -147,6 +152,10 @@ export class SessionTracker {
           this.world.completeMission(this.activeMissionId, 'completed', fact.ts);
           this.activeMissionId = undefined;
         }
+        break;
+
+      case 'awaiting':
+        this.patch({ state: 'awaiting-input', currentTool: undefined }, fact.ts);
         break;
     }
   }

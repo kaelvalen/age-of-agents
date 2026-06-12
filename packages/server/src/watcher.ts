@@ -61,6 +61,16 @@ export class TranscriptWatcher {
     await this.watcher?.close();
   }
 
+  /** Szybki kanał: fakty z hooków HTTP trafiają do tej samej maszyny stanów. */
+  applyExternalFacts(sessionId: string, projectDir: string, facts: import('./transcript/facts.js').Fact[]): void {
+    let tracker = this.trackers.get(sessionId);
+    if (!tracker) {
+      tracker = new SessionTracker(this.world, sessionId, projectDir, this.thresholds);
+      this.trackers.set(sessionId, tracker);
+    }
+    for (const fact of facts) tracker.apply(fact);
+  }
+
   private classify(path: string): { kind: 'session'; sessionId: string; projectDir: string }
     | { kind: 'subagent'; agentId: string; parentSessionId: string }
     | { kind: 'other' } {

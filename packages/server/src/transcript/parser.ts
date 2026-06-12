@@ -7,7 +7,7 @@ function clip(text: string, max = 240): string {
 }
 
 /** Wyciąga krótki opis pracy z inputu narzędzia (do dymka nad jednostką). */
-function toolDetail(tool: string, input: Record<string, unknown> | undefined): string | undefined {
+export function toolDetail(tool: string, input: Record<string, unknown> | undefined): string | undefined {
   if (!input) return undefined;
   const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
   switch (tool) {

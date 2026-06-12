@@ -1,4 +1,5 @@
 import { useSettings } from '../settings';
+import { HooksPanel } from './HooksPanel';
 
 export function ThemeSwitch() {
   const themeId = useSettings((s) => s.themeId);
@@ -20,6 +21,7 @@ export function ThemeSwitch() {
       >
         🛰️ Sci-Fi
       </button>
+      <HooksPanel />
     </div>
   );
 }

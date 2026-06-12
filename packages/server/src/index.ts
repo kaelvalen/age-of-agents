@@ -10,12 +10,38 @@ const world = new World();
 
 app.get('/health', async () => ({ ok: true, demo: demoMode }));
 
-// Endpoint hooków Claude Code (typ "http" w ~/.claude/settings.json).
-// Etap 6 podłączy payloady do maszyny stanów; do tego czasu tylko 200.
-app.post('/hooks', async (request) => {
-  app.log.debug({ hook: request.body }, 'hook event');
-  return { ok: true };
-});
+// Wszystkie trasy MUSZĄ powstać przed listen() — fastify zamyka rejestrację.
+if (demoMode) {
+  // No-op, żeby zainstalowane hooki nie sypały 404 gdy chodzi tryb demo.
+  app.post('/hooks', async () => ({ ok: true }));
+  app.get('/hooks/status', async () => ({ installed: false, demo: true }));
+} else {
+  const { TranscriptWatcher } = await import('./watcher.js');
+  const { translateHook, hooksInstalled, installHooks, uninstallHooks } = await import('./hooks.js');
+  const watcher = new TranscriptWatcher(world);
+
+  // Szybki kanał zdarzeń: hooki HTTP Claude Code (typ "http" w settings.json).
+  app.post('/hooks', async (request) => {
+    const translated = translateHook((request.body ?? {}) as never);
+    if (translated) watcher.applyExternalFacts(translated.sessionId, translated.projectDir, translated.facts);
+    return { ok: true };
+  });
+  app.get('/hooks/status', async () => ({ installed: await hooksInstalled() }));
+  app.post('/hooks/install', async () => {
+    await installHooks();
+    app.log.info('Hooki zainstalowane w ~/.claude/settings.json');
+    return { ok: true, installed: true };
+  });
+  app.post('/hooks/uninstall', async () => {
+    await uninstallHooks();
+    return { ok: true, installed: false };
+  });
+
+  app.addHook('onReady', async () => {
+    watcher.start();
+    app.log.info('Watcher transkryptów: obserwuję ~/.claude/projects');
+  });
+}
 
 await app.listen({ port: SERVER_PORT, host: '127.0.0.1' });
 
@@ -37,11 +63,6 @@ if (demoMode) {
   const { startDemo } = await import('./demo/scenario.js');
   startDemo(world);
   app.log.info('Tryb demo: generator scenariuszy uruchomiony');
-} else {
-  const { TranscriptWatcher } = await import('./watcher.js');
-  const watcher = new TranscriptWatcher(world);
-  watcher.start();
-  app.log.info('Watcher transkryptów: obserwuję ~/.claude/projects');
 }
 
 app.log.info(`Agent Citadel server: http://127.0.0.1:${SERVER_PORT} (ws: ${WS_PATH})`);
