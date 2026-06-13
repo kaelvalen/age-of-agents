@@ -10,6 +10,7 @@ import { Unit } from './unit';
 import { getHeroSheet, getPeonSheet, loadThemeSprites } from './sprites';
 import { sessionToArchetypeKey } from './archetype';
 import { loadTilemaps, hasTilemaps, buildTilemap } from './tilemap';
+import { loadBuildingSprites } from './building-sprites';
 
 interface Particle {
   g: Graphics;
@@ -140,7 +141,7 @@ export class GameView {
     });
 
     // Atlasy + tilesety PixelLab ładujemy zanim powstaną jednostki/teren.
-    await Promise.all([loadThemeSprites(this.theme.id), loadTilemaps(this.theme.id)]);
+    await Promise.all([loadThemeSprites(this.theme.id), loadTilemaps(this.theme.id), loadBuildingSprites(this.theme.id)]);
 
     this.unsubscribe = useWorld.subscribe((state) => this.reconcile(state.heroes, state.peons, state.missions));
     const { heroes, peons, missions } = useWorld.getState();
