@@ -96,23 +96,23 @@ function drawCap(g: Graphics, l: { x: number; y: number }, r: { x: number; y: nu
   g.circle(cx, cy, rad).fill(color);
 }
 
-export function buildBuilding(def: BuildingDef, theme: ThemeDef, projection: Projection): Container {
+export function buildBuilding(def: BuildingDef, theme: ThemeDef, projection: Projection, label = def.label): Container {
   const tex = getBuildingSprite(def.id);
-  if (tex) return buildBuildingSprite(def, theme, projection, tex);
+  if (tex) return buildBuildingSprite(def, theme, projection, tex, label);
   return theme.style === 'iso'
-    ? buildIsoBlock(def, theme, projection)
-    : buildTopdownHouse(def, theme, projection);
+    ? buildIsoBlock(def, theme, projection, label)
+    : buildTopdownHouse(def, theme, projection, label);
 }
 
 /** Generowany sprite budynku: kotwica w stopie footprintu, skala do szerokości w kaflach. */
-function buildBuildingSprite(def: BuildingDef, theme: ThemeDef, projection: Projection, tex: Texture): Container {
+function buildBuildingSprite(def: BuildingDef, theme: ThemeDef, projection: Projection, tex: Texture, labelText: string): Container {
   const container = new Container();
   const sprite = new Sprite(tex);
   sprite.anchor.set(0.5, 1); // stopa = dolny środek (PixelLab nie daje metadanych kotwicy)
   sprite.scale.set((def.w * theme.tile) / tex.width);
   const foot = projection.toScreen(def.gx + def.w / 2, def.gy + def.h);
   sprite.position.set(foot.x, foot.y);
-  const label = new Text({ text: def.label, style: labelStyle });
+  const label = new Text({ text: labelText, style: labelStyle });
   label.anchor.set(0.5, 0);
   label.position.set(foot.x, foot.y + 4);
   container.addChild(sprite, label);
@@ -120,7 +120,7 @@ function buildBuildingSprite(def: BuildingDef, theme: ThemeDef, projection: Proj
   return container;
 }
 
-function buildTopdownHouse(def: BuildingDef, theme: ThemeDef, projection: Projection): Container {
+function buildTopdownHouse(def: BuildingDef, theme: ThemeDef, projection: Projection, labelText: string): Container {
   const container = new Container();
   const { tile } = theme;
   const origin = projection.toScreen(def.gx, def.gy);
@@ -137,7 +137,7 @@ function buildTopdownHouse(def: BuildingDef, theme: ThemeDef, projection: Projec
   // drzwi
   g.rect(w / 2 - tile * 0.18, h - tile * 0.5, tile * 0.36, tile * 0.5).fill(0x2c2c2a);
 
-  const label = new Text({ text: def.label, style: labelStyle });
+  const label = new Text({ text: labelText, style: labelStyle });
   label.anchor.set(0.5, 0);
   label.position.set(w / 2, h + 4);
 
@@ -147,7 +147,7 @@ function buildTopdownHouse(def: BuildingDef, theme: ThemeDef, projection: Projec
   return container;
 }
 
-function buildIsoBlock(def: BuildingDef, theme: ThemeDef, projection: Projection): Container {
+function buildIsoBlock(def: BuildingDef, theme: ThemeDef, projection: Projection, labelText: string): Container {
   const container = new Container();
   const lift = theme.tile * 0.9; // wysokość bryły w px
 
@@ -174,7 +174,7 @@ function buildIsoBlock(def: BuildingDef, theme: ThemeDef, projection: Projection
   // drzwi przy dolnym narożniku
   g.rect(C.x - 7, C.y - 20, 14, 20).fill(0x2c2c2a);
 
-  const label = new Text({ text: def.label, style: labelStyle });
+  const label = new Text({ text: labelText, style: labelStyle });
   label.anchor.set(0.5, 0);
   label.position.set(C.x, C.y + 6);
 

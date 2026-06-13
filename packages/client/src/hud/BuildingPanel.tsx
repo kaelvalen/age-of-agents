@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
-import { toolToBuilding, type BuildingStatsResponse, type BuildingWindowStats } from '@agent-citadel/shared';
+import { toolToBuilding, type BuildingId, type BuildingStatsResponse, type BuildingWindowStats } from '@agent-citadel/shared';
 import { useWorld } from '../store';
 import { useSettings } from '../settings';
-import { getTheme } from '../theme';
+import { useUi, buildingText } from '../i18n';
 
 const EMPTY: BuildingWindowStats = { today: 0, week: 0, month: 0 };
 
-/** Panel budynku: ile jednostek teraz pracuje + zużycie tokenów dziś / 7 dni / 30 dni. */
+/** Panel budynku: opis (co reprezentuje) + ile teraz pracuje + tokeny dziś/7d/30d. */
 export function BuildingPanel() {
   const buildingId = useWorld((s) => s.selectedBuildingId);
   const heroes = useWorld((s) => s.heroes);
   const peons = useWorld((s) => s.peons);
   const select = useWorld((s) => s.selectBuilding);
   const themeId = useSettings((s) => s.themeId);
+  const lang = useSettings((s) => s.lang);
+  const t = useUi();
   const [stats, setStats] = useState<BuildingStatsResponse | undefined>();
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +41,7 @@ export function BuildingPanel() {
 
   if (!buildingId) return null;
 
-  const def = getTheme(themeId).buildings.find((b) => b.id === buildingId);
+  const bt = buildingText(themeId, buildingId as BuildingId, lang);
   const win = stats?.buildings[buildingId as keyof typeof stats.buildings] ?? EMPTY;
 
   // "Teraz pracuje" — na żywo ze stanu świata (bohaterowie + peony przy tym budynku).
@@ -52,13 +54,14 @@ export function BuildingPanel() {
   const workingNow = workerHeroes.length + workerPeons.length;
 
   return (
-    <div className="hud-panel sidepanel">
+    <div className="hud-panel sidepanel" style={{ overflowY: 'auto' }}>
       <div className="head">
         <div>
-          <strong>{def?.label ?? buildingId}</strong>
-          <div style={{ fontSize: 11, opacity: 0.65, marginTop: 2 }}>
-            Teraz pracuje: <b>{workingNow}</b>
-            {workingNow > 0 ? ` (${workerHeroes.length} sesji, ${workerPeons.length} peonów)` : ''}
+          <strong>{bt.label}</strong>
+          <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>{bt.desc}</div>
+          <div style={{ fontSize: 11, opacity: 0.65, marginTop: 4 }}>
+            {t.workingNow}: <b>{workingNow}</b>
+            {workingNow > 0 ? ` (${workerHeroes.length} ${t.sessions}, ${workerPeons.length} ${t.peons})` : ''}
           </div>
         </div>
         <button className="ghost" onClick={() => select(undefined)}>
@@ -83,14 +86,13 @@ export function BuildingPanel() {
 
       <div style={{ borderTop: '1px solid #33332f', paddingTop: 8 }}>
         <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.7, marginBottom: 6 }}>
-          Zużycie tokenów (wyjściowych){loading ? ' …' : ''}
+          {t.tokenUsage}
+          {loading ? ' …' : ''}
         </div>
-        <Row label="Dziś" value={win.today} />
-        <Row label="7 dni" value={win.week} />
-        <Row label="30 dni" value={win.month} />
-        <div style={{ fontSize: 10, opacity: 0.5, marginTop: 6 }}>
-          Atrybucja: tokeny → budynek użytego narzędzia; rozumowanie → budynek bieżącej pracy. Skan transkryptów (cache 60 s).
-        </div>
+        <Row label={t.today} value={win.today} />
+        <Row label={t.week} value={win.week} />
+        <Row label={t.month} value={win.month} />
+        <div style={{ fontSize: 10, opacity: 0.5, marginTop: 6 }}>{t.attribution}</div>
       </div>
     </div>
   );

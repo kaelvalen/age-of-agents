@@ -16,6 +16,8 @@ import { loadIsoTiles, hasIsoTiles, buildIsoTilemap } from './tilemap-iso';
 import { scatterDecorations, type DecoKind } from './decorations';
 import { buildTerrainMap } from './terrain-map';
 import { BUILDING_FX, collectActiveBuildings, type WorkerSample } from './building-fx';
+import { buildingText } from '../i18n';
+import type { Lang } from '../settings';
 
 /** Docelowa szerokość dekoracji w kaflach (do skalowania sprite'a). */
 const DECO_W: Record<DecoKind, number> = { tree: 1.1, rock: 0.8, bush: 0.75, flower: 0.7 };
@@ -74,7 +76,10 @@ export class GameView {
   private ready = false; // app.init() rozwiązane — wolno wołać app.destroy()
   private destroyed = false; // strażnik wyścigu init()↔destroy() (zmiana motywu w trakcie ładowania)
 
-  constructor(private readonly theme: ThemeDef) {
+  constructor(
+    private readonly theme: ThemeDef,
+    private readonly lang: Lang = 'en',
+  ) {
     this.graph = new WaypointGraph(theme);
   }
 
@@ -172,7 +177,8 @@ export class GameView {
     // w izometrii jednostka może zniknąć ZA budynkiem.
     this.unitLayer.sortableChildren = true;
     for (const def of this.theme.buildings) {
-      const node = buildBuilding(def, this.theme, projection);
+      const label = buildingText(this.theme.id, def.id, this.lang).label;
+      const node = buildBuilding(def, this.theme, projection, label);
       node.eventMode = 'static';
       node.cursor = 'pointer';
       node.on('pointertap', () => useWorld.getState().selectBuilding(def.id));

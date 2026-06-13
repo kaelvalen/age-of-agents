@@ -1,9 +1,11 @@
 import { useWorld } from '../store';
+import { useUi } from '../i18n';
 
 /** Pasek zasobów: suma tokenów wszystkich bohaterów = "złoto" twierdzy. */
 export function ResourceBar() {
   const heroes = useWorld((s) => s.heroes);
   const connected = useWorld((s) => s.connected);
+  const t = useUi();
 
   const totals = Object.values(heroes).reduce(
     (acc, hero) => ({ input: acc.input + hero.tokens.input, output: acc.output + hero.tokens.output }),
@@ -12,11 +14,11 @@ export function ResourceBar() {
 
   return (
     <div className="hud-panel resources">
-      <span title="Tokeny wyjściowe (praca wykonana)">🪙 {formatK(totals.output)}</span>
-      <span title="Tokeny wejściowe (kontekst)" style={{ opacity: 0.7 }}>
+      <span title={t.tokensOut}>🪙 {formatK(totals.output)}</span>
+      <span title={t.tokensIn} style={{ opacity: 0.7 }}>
         📜 {formatK(totals.input)}
       </span>
-      <span style={{ opacity: 0.7 }}>{connected ? '●' : '○ łączenie…'}</span>
+      <span style={{ opacity: 0.7 }}>{connected ? '●' : t.connecting}</span>
     </div>
   );
 }

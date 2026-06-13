@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { TranscriptLine } from '@agent-citadel/shared';
 import { useWorld } from '../store';
+import { useUi } from '../i18n';
 
 // Stała referencja — selektor zwracający świeże [] przy każdym wywołaniu
 // wprawiłby useSyncExternalStore w nieskończoną pętlę renderów.
@@ -12,6 +13,7 @@ export function SidePanel() {
   const hero = useWorld((s) => (selected ? s.heroes[selected] : undefined));
   const lines = useWorld((s) => (selected ? s.transcripts[selected] ?? NO_LINES : NO_LINES));
   const select = useWorld((s) => s.select);
+  const t = useUi();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,8 +28,9 @@ export function SidePanel() {
         <div>
           <strong>{hero.title}</strong>
           <div style={{ fontSize: 11, opacity: 0.65, marginTop: 2 }}>
-            {hero.model ?? 'model?'} · {hero.gitBranch ? `⎇ ${hero.gitBranch}` : ''} ·{' '}
-            {Math.round(hero.tokens.output / 1000)}k tok
+            {hero.model ?? t.modelUnknown} · {hero.gitBranch ? `⎇ ${hero.gitBranch}` : ''} ·{' '}
+            {Math.round(hero.tokens.output / 1000)}
+            {t.tok}
           </div>
         </div>
         <button className="ghost" onClick={() => select(undefined)}>
@@ -36,9 +39,7 @@ export function SidePanel() {
       </div>
       <div className="transcript" ref={scrollRef}>
         {lines.length === 0 && (
-          <div style={{ opacity: 0.5, fontSize: 12 }}>
-            Transkrypt pojawi się przy nowej aktywności sesji.
-          </div>
+          <div style={{ opacity: 0.5, fontSize: 12 }}>{t.transcriptHint}</div>
         )}
         {lines.map((line, i) => (
           <div key={i} className={`line ${line.role}`}>

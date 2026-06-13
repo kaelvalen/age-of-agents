@@ -1,5 +1,6 @@
 import type { HeroSnapshot } from '@agent-citadel/shared';
 import { useWorld } from '../store';
+import { useUi } from '../i18n';
 
 /** Linia meta misji: KTO + projekt + branch (bez powielania treści promptu). */
 function metaLine(hero: HeroSnapshot | undefined, sessionId: string): string {
@@ -16,6 +17,7 @@ export function MissionLog() {
   const heroes = useWorld((s) => s.heroes);
   const selected = useWorld((s) => s.selectedSessionId);
   const selectedBuilding = useWorld((s) => s.selectedBuildingId);
+  const t = useUi();
   if (selected || selectedBuilding) return null; // panel boczny/budynku przejmuje prawą stronę
 
   const all = Object.values(missions).sort((a, b) => b.startedAt.localeCompare(a.startedAt));
@@ -25,7 +27,7 @@ export function MissionLog() {
 
   return (
     <div className="hud-panel missions">
-      <h3>Misje</h3>
+      <h3>{t.missions}</h3>
       {[...active, ...done].map((mission) => (
         <div key={mission.id} className="mission">
           <div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useUi } from '../i18n';
 
 type Status = 'loading' | 'installed' | 'absent' | 'demo' | 'error';
 
@@ -9,6 +10,7 @@ type Status = 'loading' | 'installed' | 'absent' | 'demo' | 'error';
 export function HooksPanel() {
   const [status, setStatus] = useState<Status>('loading');
   const [busy, setBusy] = useState(false);
+  const t = useUi();
 
   const refresh = async () => {
     try {
@@ -28,9 +30,7 @@ export function HooksPanel() {
 
   const toggle = async () => {
     const installing = status === 'absent';
-    const message = installing
-      ? 'Zainstalować hooki HTTP w ~/.claude/settings.json?\n\nDzięki nim gra reaguje natychmiast (bez ~1 s opóźnienia). Powstanie kopia zapasowa settings.json.citadel-backup. Istniejące hooki nie są modyfikowane.'
-      : 'Usunąć hooki Agent Citadel z ~/.claude/settings.json? (cudze wpisy zostają)';
+    const message = installing ? t.hooksInstall : t.hooksUninstall;
     if (!window.confirm(message)) return;
     setBusy(true);
     try {
@@ -42,8 +42,8 @@ export function HooksPanel() {
   };
 
   return (
-    <button className="ghost" disabled={busy} onClick={toggle} title="Natychmiastowe zdarzenia z sesji Claude Code">
-      {status === 'installed' ? '⚡ hooki: on' : '⚡ hooki: off'}
+    <button className="ghost" disabled={busy} onClick={toggle} title={t.hooksTitle}>
+      {status === 'installed' ? t.hooksOn : t.hooksOff}
     </button>
   );
 }

@@ -1,22 +1,13 @@
-import type { HeroStateKind } from '@agent-citadel/shared';
 import { getGameView } from '../game/view';
 import { TEAM_COLORS } from '../game/placeholders';
 import { useWorld } from '../store';
-
-const STATE_SHORT: Record<HeroStateKind, string> = {
-  thinking: 'myśli',
-  working: 'pracuje',
-  'awaiting-input': 'czeka!',
-  idle: 'bezczynny',
-  sleeping: 'śpi',
-  error: 'błąd',
-  returning: 'wraca',
-};
+import { useUi } from '../i18n';
 
 export function Portraits() {
   const heroes = useWorld((s) => s.heroes);
   const selected = useWorld((s) => s.selectedSessionId);
   const select = useWorld((s) => s.select);
+  const t = useUi();
 
   const list = Object.values(heroes).sort((a, b) => a.startedAt.localeCompare(b.startedAt));
   if (list.length === 0) return null;
@@ -42,7 +33,7 @@ export function Portraits() {
             </div>
             <div className="state">
               {hero.state === 'awaiting-input' ? '❗ ' : ''}
-              {STATE_SHORT[hero.state]}
+              {t.states[hero.state]}
             </div>
           </div>
         );
