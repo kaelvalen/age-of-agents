@@ -3,8 +3,19 @@ dist/
 *.log
 .DS_Store
 .superpowers/
+.playwright-mcp/
 
-# Surowe klatki pobierane offline z PixelLab (npm run assets) trafiają do downloads/;
-# do repo idą tylko spakowane atlasy z public/assets/ — to własne assety, pivot na
-# PixelLab zniósł ograniczenie licencyjne Tiny Swords/CraftPix.
+# Surowe paczki pobierane offline (npm run assets) trafiają do downloads/.
+# Do repo commitujemy WYŁĄCZNIE własne atlasy PixelLab z public/assets/.
 downloads/
+
+# Defense-in-depth: katalogi-cele opcjonalnych paczek zewnętrznych. Część z nich
+# (Tiny Swords, CraftPix) zakazuje redystrybucji — nigdy nie mogą trafić do repo,
+# nawet gdyby ktoś uruchomił `npm run assets` i zrobił `git add .`.
+packages/client/public/assets/*/tiny-swords/
+packages/client/public/assets/*/craftpix-drones/
+packages/client/public/assets/*/lucifer-sorceress/
+packages/client/public/assets/*/lucifer-necromancer/
+packages/client/public/assets/*/wyrmsun/
+packages/client/public/assets/*/acdrnx-mech/
+packages/client/public/assets/*/lunar-battle/

@@ -6,7 +6,7 @@ import type { World } from './world.js';
 
 /**
  * Progi czasowe sterujące cyklem życia jednostek na mapie.
- * To decyzje UX gry, nie technikalia — patrz TODO niżej.
+ * To decyzje UX gry, nie technikalia — patrz profil DEFAULT_THRESHOLDS niżej.
  */
 export interface StateThresholds {
   /** Po ilu ms od ostatniej aktywności bohater przechodzi w 'idle' (stoi przy twierdzy). */

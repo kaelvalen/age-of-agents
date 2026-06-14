@@ -1,5 +1,5 @@
 {
-  "comment": "Paczki assetów Agent Citadel. Surowe pliki NIE trafiają do repo (licencje Tiny Swords i CraftPix zakazują redystrybucji). Pobierz zipy ze stron 'page' do katalogu downloads/ pod nazwą '<id>.zip', potem uruchom: npm run assets",
+  "comment": "OPCJONALNY pipeline alternatywnych paczek assetów. Gra działa w PEŁNI na własnych assetach PixelLab dołączonych do repo (packages/client/public/assets/) — ten manifest NIE jest potrzebny do uruchomienia. Jeśli chcesz podmienić assety na zewnętrzne paczki: pobierz zipy ze stron 'page' do downloads/<id>.zip i uruchom `npm run assets`. Surowe pliki tych paczek NIE są commitowane (część, np. Tiny Swords/CraftPix, zakazuje redystrybucji) — trafiają tylko do downloads/ (gitignore).",
   "packs": [
     {
       "id": "tiny-swords",

@@ -1,70 +1,133 @@
-# AI of Agents
+<div align="center">
 
-> Pakiet npm: **`ai-of-agents`** (alias komendy: `aioa`).
+# 🏰 Age of Agents
 
-Wizualizacja sesji agentów Claude Code jako gra RTS w pixel-arcie — inspirowana
-[AgentCraft](https://www.getagentcraft.com). Każda sesja to bohater wychodzący
-z twierdzy, subagenci to peony w kolorach drużyny, a typ używanego narzędzia
-decyduje, do którego budynku jednostka maszeruje (kuźnia = edycja kodu,
-wieża maga = research w sieci, kopalnia = terminal…).
+**Watch your AI coding sessions grow a peaceful pixel-art realm.**
 
-Dwa motywy: **fantasy** (top-down) i **sci-fi** (izometria).
+Every Claude Code or Codex session becomes a settler walking out of the keep.
+The tool it runs decides which workshop it visits, subagents become workers,
+and tokens fill the storehouse — a calm, Age-of-Empires-style kingdom of your work.
+No combat, just a quiet realm you can watch at a glance.
 
-## Instalacja przez npm
+[![npm](https://img.shields.io/badge/npx-ai--of--agents-6e9b46.svg)](https://www.npmjs.com/package/ai-of-agents)
+[![License: MIT](https://img.shields.io/badge/License-MIT-e0b64a.svg)](LICENSE)
+![Node](https://img.shields.io/badge/node-%E2%89%A522-339933?logo=node.js&logoColor=white)
+![PixiJS](https://img.shields.io/badge/PixiJS-v8-e91e63)
 
-Po publikacji pakiet uruchamia się bez instalacji:
+[**▶ Live site**](https://agentsmill.github.io/ai-of-agents/) · [Quick start](#-quick-start) · [How it works](#-how-it-works) · [Architecture](#-architecture)
+
+<img src="docs/screenshots/citadel-fantasy.png" alt="Age of Agents — peaceful fantasy realm" width="820">
+
+</div>
+
+---
+
+## ✨ What is this?
+
+Age of Agents (npm package **`ai-of-agents`**) runs as a small local web app
+alongside your normal CLI workflow. It watches your agent session transcripts and
+renders them as a calm, real-time strategy realm:
+
+- **Each session → a settler.** Start a Claude Code or Codex session and a settler walks out of the keep, carrying your prompt as its task.
+- **Tools → workshops.** The settler heads to the building that matches the work — the forge for code edits, the mage tower for web research, the mine for the terminal.
+- **Subagents → workers.** When a session spawns subagents (e.g. the Task tool), they appear as little workers around their settler.
+- **Tokens → harvest.** Tokens read and produced fill the storehouse. Settlers ponder while thinking, rest when waiting, and stroll home when the day's work is done.
+- **Two worlds.** Switch between a **fantasy** (top-down) and a **sci-fi** (isometric) realm on the fly.
+
+A glanceable, second-monitor view of what your agents are quietly up to.
+
+## 🖼️ Gallery
+
+| Fantasy | Sci-Fi |
+| --- | --- |
+| <img src="docs/screenshots/citadel-fantasy.png" alt="Fantasy realm" width="400"> | <img src="docs/screenshots/citadel-scifi.png" alt="Sci-fi colony" width="400"> |
+
+**Session detail** — click a settler to inspect its task, token economy and live activity:
+
+<div align="center">
+<img src="docs/screenshots/citadel-session-panel.png" alt="Session detail panel" width="720">
+</div>
+
+## 🚀 Quick start
+
+Run it instantly, no install:
 
 ```bash
-npx ai-of-agents          # podgląda sesje z ~/.claude/projects, wypisuje URL
-npx ai-of-agents --demo   # tryb demo (sztuczne dane)
-npx ai-of-agents --open   # dodatkowo otwiera przeglądarkę
+npx ai-of-agents          # watches ~/.claude & ~/.codex sessions, prints the URL
+npx ai-of-agents --demo   # calm demo mode (fake sessions)
+npx ai-of-agents --open   # also open the browser
 ```
 
-Albo globalnie (komendy `ai-of-agents` i krótszy alias `aioa`):
+Or install globally (commands `ai-of-agents` and the shorter `aioa`):
 
 ```bash
 npm i -g ai-of-agents
 aioa --open
 ```
 
-## Szybki start
+> The server binds to `127.0.0.1` only and never writes your transcripts anywhere — it just reads them locally and broadcasts game state over a local WebSocket. See [Privacy](#-privacy).
+
+### From source
 
 ```bash
-npm install
-npm run demo     # serwer w trybie demo + klient (Vite)
+git clone https://github.com/agentsmill/ai-of-agents
+cd ai-of-agents && npm install
+npm run demo     # server (demo) + client (Vite) → http://localhost:5173
+npm run dev      # visualize your real sessions
 ```
 
-Tryb produkcyjny (obserwacja prawdziwych sesji Claude Code z `~/.claude/projects`):
+## 🧭 How it works
+
+```
+agent session transcript ──▶ server (watcher + state machine) ──▶ WebSocket ──▶ client (PixiJS realm + HUD)
+```
+
+- The **server** tails JSONL transcripts, turns each line into a `Fact`, and runs a small per-session **state machine** (thinking / working / resting / idle / returning).
+- It broadcasts a `HeroSnapshot` for every session over a WebSocket. The snapshot carries *what* the session is doing (`currentTool`, recent actions, tokens) — never raw coordinates.
+- The **client** decides *where* each settler goes and renders the pixel-art realm, the HUD, the minimap and the side panel.
+
+## 🎨 Themes
+
+Two full art sets, switchable from the top bar:
+
+- **Fantasy** — top-down: keep, mage tower, library, guild, market, mine, orchard & ponds.
+- **Sci-Fi** — isometric: command center, hangars, drone factory, ore refinery, research lab on a calm Martian colony.
+
+## 🧱 Architecture
+
+A small npm-workspaces monorepo, published as the single `ai-of-agents` CLI:
+
+| Package | Stack | Responsibility |
+| --- | --- | --- |
+| `packages/shared` | TypeScript | WebSocket protocol types (`GameEvent`, snapshots) |
+| `packages/server` | Node + Fastify + `ws` | transcript watcher, state machine, hooks endpoint, demo generator, CLI |
+| `packages/client` | Vite + React 19 + PixiJS v8 | the game realm, HUD, minimap, side panel |
 
 ```bash
-npm run dev
+npm test      # unit tests (server + client)
+npm run build # production client + bundled CLI (dist/cli.js)
 ```
 
-## Assety
+## 🔒 Privacy
 
-Surowych plików graficznych nie ma w repo (licencje Tiny Swords i CraftPix
-zakazują redystrybucji). Pobierz zipy ze stron wymienionych w
-`assets-manifest.json` do katalogu `downloads/` (nazwa: `<id>.zip`), potem:
+- The server listens on `127.0.0.1` only — nothing is exposed to your network.
+- Transcripts are read **locally and read-only**; their contents are never written to disk by Age of Agents or sent anywhere.
+- Installing the optional Claude Code hooks modifies `~/.claude/settings.json` (a fast event channel). Demo mode touches nothing of yours.
 
-```bash
-npm run assets
-```
+## 🎭 Assets
 
-Bez assetów gra działa na placeholderach generowanych programowo.
+All pixel-art assets in `packages/client/public/assets/` were **generated by the author with [PixelLab](https://pixellab.ai)** and are the author's own work — released here under the same MIT license as the code. Without any assets the game still runs on procedurally generated placeholders.
 
-## Struktura
+`assets-manifest.json` + `scripts/download-assets.mjs` are an **optional** helper for swapping in alternative third-party packs locally; those packs are never committed (some forbid redistribution) and are not needed to run the game.
 
-- `packages/shared` — typy protokołu WebSocket (GameEvent, snapshoty)
-- `packages/server` — Node: watcher transkryptów, maszyna stanów, WS, hooki HTTP
-- `packages/client` — Vite + React 19 + PixiJS v8: świat gry i HUD
+## 🤝 Contributing
 
-## Atrybucja assetów
+Issues and PRs are welcome. To get going: `npm install`, then `npm run demo` to see the realm, and `npm test` before opening a PR.
 
-| Paczka | Autor | Licencja |
-|---|---|---|
-| Tiny Swords | Pixel Frog | custom free (bez redystrybucji) |
-| Lucifer Collection | FoozleCC | CC0 |
-| Wyrmsun collection | społeczność Wyrmsun | CC0 |
-| Sci-Fi Mech Buildings | acdrnx | CC0 |
-| Free Drones Pack | CraftPix | CraftPix free |
-| Lunar Battle Pack | MattWalkden | CC0 |
+## 📜 License
+
+[MIT](LICENSE) © Mateusz Pawelczuk. Art assets generated with PixelLab, redistributed under MIT per PixelLab's Terms of Service.
+
+## 🙏 Acknowledgements
+
+Inspired by [AgentCraft](https://www.getagentcraft.com). Built with [PixiJS](https://pixijs.com), [React](https://react.dev), [Fastify](https://fastify.dev) and [PixelLab](https://pixellab.ai).

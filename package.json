@@ -4,6 +4,15 @@
   "description": "AI of Agents — wizualizacja sesji Claude Code jako gra RTS w pixel-arcie",
   "type": "module",
   "license": "MIT",
+  "author": "Mateusz Pawelczuk",
+  "homepage": "https://agentsmill.github.io/ai-of-agents/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/agentsmill/ai-of-agents.git"
+  },
+  "bugs": {
+    "url": "https://github.com/agentsmill/ai-of-agents/issues"
+  },
   "bin": {
     "ai-of-agents": "dist/cli.js",
     "aioa": "dist/cli.js"
@@ -36,7 +45,6 @@
   "devDependencies": {
     "concurrently": "^9.1.0",
     "esbuild": "^0.28.1",
-    "flyctl": "^1.2.8",
     "pngjs": "^7.0.0"
   },
   "engines": {
