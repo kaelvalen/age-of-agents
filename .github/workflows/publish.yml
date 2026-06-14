@@ -1,0 +1,29 @@
+name: Publish to npm
+
+# Publikuje paczkę `age-of-agents` na npm po wypchnięciu taga wersji (np. v0.1.1).
+# Token NIE jest w tym pliku — pochodzi z sekretu repozytorium NPM_TOKEN
+# (Settings → Secrets and variables → Actions). Użyj tokenu typu "Automation"
+# (omija 2FA w CI). Przepływ wydania:
+#   npm version patch        # podbija wersję + tworzy tag vX.Y.Z
+#   git push && git push --tags
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm ci
+      # prepublishOnly w package.json sam odpala build + testy przed publikacją.
+      - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
