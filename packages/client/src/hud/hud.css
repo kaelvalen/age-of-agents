@@ -23,6 +23,86 @@
   font-family: 'Pixelify Sans', system-ui, sans-serif;
 }
 
+/* ── Przełącznik miast: kompaktowy trigger + rozwijana lista ── */
+.proj-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #2a2926;
+  color: #f1efe8;
+  border: none;
+  cursor: pointer;
+  text-shadow: 1px 1px 0 #000;
+  white-space: nowrap;
+}
+.proj-trigger:hover {
+  background: #323130;
+}
+
+/* Lista rozwijana — własny chrome .hud-panel, zakotwiczona pod triggerem. */
+.proj-dropdown {
+  top: 100%;
+  /* Wyśrodkuj pod triggerem (kontener jest wyśrodkowany translateX(-50%)),
+     żeby szeroka lista nie wyjeżdżała poza prawą krawędź i nie była przycinana. */
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 4px;
+  min-width: 100%;
+  width: max-content;
+  max-width: 92vw;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0;
+  z-index: 30;
+}
+
+/* Wspólny wygląd opcji dropdownu — używany przez ProjectSwitcher (.proj-option)
+   i przełącznik języka w ThemeSwitch (.hud-dd-option). */
+.proj-option,
+.hud-dd-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  color: #a8a69d;
+  border: none;
+  border-bottom: 1px solid #2a2926;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  text-shadow: 1px 1px 0 #000;
+  font-size: 13px;
+}
+.proj-option:last-child,
+.hud-dd-option:last-child {
+  border-bottom: none;
+}
+.proj-option:hover,
+.hud-dd-option:hover {
+  background: #2f2e2a;
+  color: #f1efe8;
+}
+.proj-option.active,
+.hud-dd-option.active {
+  background: #45443f;
+  color: #f1efe8;
+}
+
+/* Generyczne menu dropdownu (krótkie listy, np. język) — chrome z .hud-panel,
+   zakotwiczone pod triggerem w kontenerze position:relative. */
+.hud-dd-menu {
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 100%;
+  width: max-content;
+  padding: 0;
+  z-index: 30;
+}
+
 /* Beveled kafelek statystyki (ostre rogi, światło lewa-góra / cień prawy-dół). */
 .stat-tile {
   background: #2a2926;

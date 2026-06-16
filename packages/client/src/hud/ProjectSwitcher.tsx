@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState, useEffect, type ReactNode } from 'react';
 import { useWorld } from '../store';
 import { useUi } from '../i18n';
 import type { AgentKind, HeroStateKind } from '@agent-citadel/shared';
@@ -57,20 +57,27 @@ interface CityInfo {
 }
 
 /**
- * Pasek zakładek miast: jeden tab per aktywny katalog projektu (= jedno miasto).
+ * Przełącznik miast jako DROPDOWN: jeden kompaktowy trigger zamiast poziomej belki.
  *
- *  - "All": widok ogólny (agenci ze wszystkich miast na jednej mapie).
- *  - Jeden tab per projectDir: nazwa miasta + liczba aktywnych agentów
- *    + odznaki agentów (C/O/K) + ikony stanów (ile pracuje, ile myśli…).
+ *  - Trigger pokazuje nagłówek (🏙️ CITIES · n miast · m agentów) + aktualnie wybrane
+ *    miasto (lub 🌍 „All") + strzałkę. Dzięki temu HUD nie rozjeżdża się poziomo,
+ *    niezależnie od liczby projektów.
+ *  - Po kliknięciu rozwija się lista: „All" (widok ogólny) + jeden wiersz per
+ *    aktywne miasto (nazwa + liczba sesji + odznaki agentów C/O/K + ikony stanów).
+ *  - Lista jest przewijalna (maxHeight), więc skaluje się do wielu projektów.
  *
- *  TYLKO projekty z aktywnymi sesjami są widoczne (activeSessions > 0).
- *  Miasta znikają automatycznie, gdy wszyscy ich agenci zakończą pracę.
- *  Tło w stylu pixel-art HUD (hud-panel + px font), ostre rogi.
+ *  TYLKO projekty z aktywnymi sesjami są widoczne (count > 0). Gdy wszyscy agenci
+ *  miasta skończą, miasto znika z listy. Zamykanie: klik poza, Esc, wybór miasta.
  */
 export function ProjectSwitcher() {
   const heroes = useWorld((s) => s.heroes);
   const selected = useWorld((s) => s.selectedProjectDir);
   const selectProject = useWorld((s) => s.selectProject);
+  const t = useUi();
+
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const cities = useMemo<Map<string, CityInfo>>(() => {
     const acc = new Map<string, CityInfo>();
@@ -94,8 +101,34 @@ export function ProjectSwitcher() {
     return acc;
   }, [heroes]);
 
-  // Pokaż TYLKO miasta z aktywnymi sesjami (activeSessions > 0).
-  // Gdy wszyscy agenci zakończą, miasto znika z listy.
+  // Zamknij dropdown po kliknięciu poza panelem lub naciśnięciu Esc.
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        triggerRef.current?.focus(); // przywróć focus na trigger (zamknięcie z klawiatury)
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  // Gdy wybrane miasto zniknie (jego agenci skończą pracę), wróć do widoku „Wszystkie".
+  // Inaczej trigger pokazuje miasto z licznikiem 0, lista go nie zawiera, a mapa/panel
+  // architekta zostają odfiltrowane do pustego projektu — wszystko „znika" bez śladu.
+  useEffect(() => {
+    if (selected !== undefined && !cities.has(selected)) selectProject(undefined);
+  }, [selected, cities, selectProject]);
+
+  // Pokaż TYLKO miasta z aktywnymi sesjami (count > 0).
   const activeCities = [...cities.values()].filter((c) => c.count > 0);
   // Sortuj malejąco po aktywnych sesjach, potem alfabetycznie.
   activeCities.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
@@ -103,150 +136,171 @@ export function ProjectSwitcher() {
   if (activeCities.length === 0) return null; // brak agentów = brak paska (czysty widok)
 
   const totalSessions = activeCities.reduce((sum, c) => sum + c.count, 0);
+  // Wybrane miasto (jeśli istnieje i wciąż aktywne); inaczej trigger pokaże „All".
+  const selectedCity = selected !== undefined ? activeCities.find((c) => c.dir === selected) : undefined;
+
+  const choose = (dir?: string) => {
+    selectProject(dir);
+    setOpen(false);
+    // przywróć focus na trigger tylko przy wyborze z klawiatury (focus był w panelu)
+    if (rootRef.current?.contains(document.activeElement)) triggerRef.current?.focus();
+  };
 
   return (
     <div
+      ref={rootRef}
       className="hud-panel px"
       style={{
         position: 'absolute',
         top: 16,
         left: '50%',
         transform: 'translateX(-50%)',
-        display: 'flex',
-        alignItems: 'stretch',
-        gap: 0,
         padding: 0,
-        zIndex: 10,
+        zIndex: 20,
         maxWidth: '92vw',
-        overflow: 'hidden',
       }}
     >
-      <Header total={totalSessions} cities={activeCities.length} />
-      <AllTab active={selected === undefined} onClick={() => selectProject(undefined)} count={totalSessions} />
-      <Divider />
-      {activeCities.map((city) => (
-        <CityTab
-          key={city.dir}
-          city={city}
-          active={selected === city.dir}
-          onClick={() => selectProject(city.dir)}
-        />
-      ))}
-    </div>
-  );
-}
+      {/* ── Trigger (kompaktowy, klikalny) ── */}
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="px proj-trigger"
+        aria-haspopup="menu"
+        aria-controls="proj-city-menu"
+        aria-expanded={open}
+        title={t.cities}
+      >
+        <span style={{ fontSize: 18 }}>🏙️</span>
+        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, textAlign: 'left' }}>
+          <span style={{ fontSize: 12, color: '#a8a69d' }}>{t.cities}</span>
+          <span style={{ fontSize: 11 }}>
+            {activeCities.length} <span style={{ color: '#a8a69d' }}>· {totalSessions} {t.agents}</span>
+          </span>
+        </div>
 
-function Header({ total, cities }: { total: number; cities: number }) {
-  const t = useUi();
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '8px 14px',
-        background: '#2a2926',
-        borderRight: '2px solid #3a3a36',
-        fontSize: 13,
-        color: '#f1efe8',
-        textShadow: '1px 1px 0 #000',
-      }}
-    >
-      <span style={{ fontSize: 18 }}>🏙️</span>
-      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-        <span style={{ fontSize: 12, color: '#a8a69d' }}>{t.cities}</span>
-        <span style={{ fontSize: 11 }}>
-          {cities} <span style={{ color: '#a8a69d' }}>· {total} {t.agents}</span>
+        <span style={{ width: 2, alignSelf: 'stretch', background: '#3a3a36' }} />
+
+        {/* Aktualny wybór: All albo nazwa miasta + licznik. */}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+          {selected === undefined ? (
+            <>
+              <span style={{ fontSize: 16 }}>🌍</span>
+              <span>{t.allCities}</span>
+              <CountBadge count={totalSessions} active />
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize: 15 }}>🏛️</span>
+              <span style={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {selectedCity ? selectedCity.name : prettifyName(selected, selected)}
+              </span>
+              <CountBadge count={selectedCity?.count ?? 0} active />
+            </>
+          )}
         </span>
-      </div>
+
+        <span
+          aria-hidden
+          style={{
+            marginLeft: 4,
+            fontSize: 11,
+            color: '#a8a69d',
+            transform: open ? 'rotate(180deg)' : 'none',
+            transition: 'transform 120ms ease',
+          }}
+        >
+          ▾
+        </span>
+      </button>
+
+      {/* ── Rozwijana lista miast ── */}
+      {open && (
+        <div className="hud-panel px proj-dropdown" id="proj-city-menu" role="menu" aria-label={t.cities}>
+          <OptionRow
+            icon="🌍"
+            label={t.allCities}
+            count={totalSessions}
+            active={selected === undefined}
+            onClick={() => choose(undefined)}
+          />
+          <div role="none" style={{ height: 2, background: '#3a3a36' }} />
+          {activeCities.map((city) => (
+            <OptionRow
+              key={city.dir}
+              icon="🏛️"
+              label={city.name}
+              title={city.dir}
+              count={city.count}
+              active={selected === city.dir}
+              onClick={() => choose(city.dir)}
+              meta={<CityMeta city={city} active={selected === city.dir} />}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function Divider() {
-  return <div style={{ width: 2, background: '#3a3a36' }} />;
+function CountBadge({ count, active }: { count: number; active: boolean }) {
+  return (
+    <span
+      style={{
+        background: active ? '#5dcaa5' : '#3a3a36',
+        color: active ? '#15140f' : '#a8a69d',
+        padding: '1px 6px',
+        fontSize: 11,
+        minWidth: 18,
+        textAlign: 'center',
+      }}
+    >
+      {count}
+    </span>
+  );
 }
 
-function AllTab({ active, onClick, count }: { active: boolean; onClick: () => void; count: number }) {
-  const t = useUi();
+function OptionRow({
+  icon,
+  label,
+  count,
+  active,
+  onClick,
+  title,
+  meta,
+}: {
+  icon: string;
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+  title?: string;
+  meta?: ReactNode;
+}) {
   return (
     <button
+      type="button"
+      role="menuitemradio"
+      aria-checked={active}
       onClick={onClick}
-      className="px"
-      style={{
-        background: active ? '#45443f' : 'transparent',
-        color: active ? '#f1efe8' : '#a8a69d',
-        border: 'none',
-        borderRight: '2px solid #3a3a36',
-        padding: '8px 14px',
-        fontSize: 14,
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        whiteSpace: 'nowrap',
-        textShadow: '1px 1px 0 #000',
-      }}
+      className={`px proj-option${active ? ' active' : ''}`}
+      title={title}
     >
-      <span style={{ fontSize: 16 }}>🌍</span>
-      <span>{t.allCities}</span>
-      <span
-        style={{
-          background: active ? '#5dcaa5' : '#3a3a36',
-          color: active ? '#15140f' : '#a8a69d',
-          padding: '1px 6px',
-          fontSize: 11,
-          minWidth: 18,
-          textAlign: 'center',
-        }}
-      >
-        {count}
+      <span style={{ fontSize: 15 }}>{icon}</span>
+      <span style={{ flex: 1, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {label}
       </span>
+      <CountBadge count={count} active={active} />
+      {meta}
     </button>
   );
 }
 
-function CityTab({ city, active, onClick }: { city: CityInfo; active: boolean; onClick: () => void }) {
-  // Top 3 stany (sortowane malejąco po count) — każdy z emoji i liczbą.
-  const topStates = [...city.states.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
-
+/** Odznaki agentów (C/O/K) + ikony stanów (⚙️3 ⏸️1) dla wiersza miasta. */
+function CityMeta({ city, active }: { city: CityInfo; active: boolean }) {
+  const topStates = [...city.states.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
   return (
-    <button
-      onClick={onClick}
-      className="px"
-      title={city.dir}
-      style={{
-        background: active ? '#45443f' : 'transparent',
-        color: active ? '#f1efe8' : '#a8a69d',
-        border: 'none',
-        borderRight: '2px solid #3a3a36',
-        padding: '8px 12px',
-        fontSize: 13,
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        whiteSpace: 'nowrap',
-        textShadow: '1px 1px 0 #000',
-      }}
-    >
-      <span style={{ fontSize: 15 }}>🏛️</span>
-      <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>{city.name}</span>
-      <span
-        style={{
-          background: active ? '#5dcaa5' : '#3a3a36',
-          color: active ? '#15140f' : '#a8a69d',
-          padding: '1px 6px',
-          fontSize: 11,
-          minWidth: 18,
-          textAlign: 'center',
-        }}
-      >
-        {city.count}
-      </span>
-      {/* Odznaki agentów: C/O/K (Claude bez odznaki, bo domyślny). */}
+    <>
       {city.agents.size > 0 && (
         <span style={{ display: 'flex', gap: 2 }}>
           {[...city.agents].map((a) => {
@@ -274,7 +328,6 @@ function CityTab({ city, active, onClick }: { city: CityInfo; active: boolean; o
           })}
         </span>
       )}
-      {/* Stany: ikona + count (np. ⚙️3 ⏸️1). */}
       {topStates.length > 0 && (
         <span style={{ display: 'flex', gap: 3, marginLeft: 4, fontSize: 11, color: active ? '#d4d2c8' : '#888780' }}>
           {topStates.map(([state, n]) => (
@@ -285,6 +338,6 @@ function CityTab({ city, active, onClick }: { city: CityInfo; active: boolean; o
           ))}
         </span>
       )}
-    </button>
+    </>
   );
 }
