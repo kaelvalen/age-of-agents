@@ -14,7 +14,7 @@ import { loadBuildingSprites, getBuildingSprite } from './building-sprites';
 import { loadDecorationSprites, getDecorationTexture } from './decoration-sprites';
 import { loadIsoTiles, hasIsoTiles, buildIsoTilemap } from './tilemap-iso';
 import { scatterDecorations, type DecoKind } from './decorations';
-import { peonSpawnScatter } from './scatter';
+import { peonSpawnScatter, heroSpawnScatter } from './scatter';
 import { buildTerrainMap } from './terrain-map';
 import { BUILDING_FX, collectActiveBuildings, type WorkerSample } from './building-fx';
 import { buildingText } from '../i18n';
@@ -405,7 +405,9 @@ export class GameView {
         // stabile del nome del progetto. La citadella resta la destinazione
         // per le sessioni senza progetto riconoscibile.
         const homeId = homeBuilding(this.theme, hero);
-        const door = this.building(homeId).door;
+        const home = this.building(homeId);
+        const o = heroSpawnScatter(hero.sessionId);
+        const door = { gx: home.door.gx + o.dx, gy: home.door.gy + o.dy };
         const sheet = getHeroSheet(sessionToArchetypeKey(hero));
         unit = new Unit(hero.sessionId, hero.teamColor, false, clipName(hero.title), door, this.theme.projection, sheet, hero.agent ?? 'claude', this.theme.heroSprite.scale, this.theme.heroSprite.footAnchor);
         unit.container.eventMode = 'static';
@@ -414,6 +416,10 @@ export class GameView {
         unit.container.on('pointertap', () => useWorld.getState().select(sessionId));
         this.units.set(hero.sessionId, unit);
         this.unitLayer.addChild(unit.container);
+        // Zapamiętaj budynek „domowy" — w przeciwnym razie idle/thinking
+        // bohaterowie wracają do Twierdzy (fallback w steer/wanderIdle) i stoi
+        // ich w piazza. Z domem pamiętanym wracają pod właściwy punkt zbiórki.
+        this.lastBuilding.set(hero.sessionId, homeId);
       }
       unit.setName(clipName(hero.title));
       unit.setState(hero.state, hero.state === 'working' ? hero.toolDetail ?? hero.currentTool : undefined);
