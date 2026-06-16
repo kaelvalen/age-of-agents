@@ -1,5 +1,5 @@
 import { basename } from 'node:path';
-import type { ActionEntry, AgentKind, HeroSnapshot, HeroStateKind } from '@agent-citadel/shared';
+import type { ActionEntry, AgentKind, HeroSnapshot, HeroStateKind, WieldedArsenal } from '@agent-citadel/shared';
 import type { Fact } from './transcript/facts.js';
 import { cleanTitle, isSubstantialPrompt } from './transcript/title.js';
 import type { World } from './world.js';
@@ -52,6 +52,9 @@ export class SessionTracker {
   private projectName?: string; // basename cwd, np. "RTS agents"
   private workingDir?: string; // pełny cwd z transkryptu — realna ścieżka do .beads/graphify
   private recentActions: ActionEntry[] = []; // ostatnie narzędzia, najnowsze pierwsze (oś aktywności w panelu)
+  private wieldedSkills = new Set<string>();
+  private wieldedConnectors = new Set<string>();
+  private wieldedPlugins = new Set<string>();
 
   private static readonly MAX_RECENT_ACTIONS = 5;
 
@@ -62,6 +65,14 @@ export class SessionTracker {
     private readonly thresholds: StateThresholds = DEFAULT_THRESHOLDS,
     private readonly agent: AgentKind = 'claude',
   ) {}
+
+  private wielded(): WieldedArsenal {
+    return {
+      skills: [...this.wieldedSkills],
+      connectors: [...this.wieldedConnectors],
+      plugins: [...this.wieldedPlugins],
+    };
+  }
 
   private hero(): HeroSnapshot {
     const existing = this.world.getHero(this.sessionId);
@@ -78,6 +89,7 @@ export class SessionTracker {
       state: 'idle',
       tokens: this.tokens,
       recentActions: this.recentActions,
+      wielded: this.wielded(),
       startedAt: now,
       lastActivityAt: now,
     };
@@ -201,6 +213,15 @@ export class SessionTracker {
           this.activeMissionId = undefined;
         }
         break;
+
+      case 'attribution': {
+        let changed = false;
+        if (fact.skill && !this.wieldedSkills.has(fact.skill)) { this.wieldedSkills.add(fact.skill); changed = true; }
+        if (fact.mcpServer && !this.wieldedConnectors.has(fact.mcpServer)) { this.wieldedConnectors.add(fact.mcpServer); changed = true; }
+        if (fact.plugin && !this.wieldedPlugins.has(fact.plugin)) { this.wieldedPlugins.add(fact.plugin); changed = true; }
+        if (changed) this.patch({ wielded: this.wielded() });
+        break;
+      }
 
       case 'awaiting':
         this.patch({ state: 'awaiting-input', currentTool: undefined }, fact.ts);

@@ -129,4 +129,18 @@ describe('SessionTracker', () => {
     expect(hero?.projectName).toBe('RTS agents'); // basename do HUD
     expect(hero?.projectDir).toBe('-Users-mpawelczuk-RTS-agents'); // klucz miasta bez zmian
   });
+
+  it('kumuluje wielded z faktów attribution na bohaterze', () => {
+    const world = new World();
+    const tracker = new SessionTracker(world, 'sX', 'PD');
+    tracker.apply({ kind: 'attribution', skill: 'superpowers:brainstorming', mcpServer: 'visualize' });
+    tracker.apply({ kind: 'attribution', plugin: 'superpowers' });
+    tracker.apply({ kind: 'attribution', skill: 'superpowers:brainstorming' }); // duplikat
+    const hero = world.getHero('sX')!;
+    expect(hero.wielded).toEqual({
+      skills: ['superpowers:brainstorming'],
+      connectors: ['visualize'],
+      plugins: ['superpowers'],
+    });
+  });
 });
