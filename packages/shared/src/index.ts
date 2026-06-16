@@ -1,3 +1,6 @@
+import type { ProjectArsenal, WieldedArsenal } from './arsenal.js';
+export * from './arsenal.js';
+
 /** Protokół WebSocket Agent Citadel — wspólne typy serwera i klienta. */
 
 /** Który CLI wygenerował sesję — steruje odznaką bohatera i mapowaniem narzędzi. */
@@ -46,6 +49,8 @@ export interface HeroSnapshot {
   tokens: { input: number; output: number };
   /** Ostatnie użyte narzędzia (najnowsze pierwsze, max kilka) — oś aktywności w panelu. */
   recentActions?: ActionEntry[];
+  /** Co ta sesja realnie wyciągnęła z arsenału (z atrybucji transkryptu). */
+  wielded?: WieldedArsenal;
   startedAt: string;
   lastActivityAt: string;
 }
@@ -94,7 +99,8 @@ export type GameEvent =
   | { type: 'mission-started'; mission: MissionSnapshot }
   | { type: 'mission-completed'; mission: MissionSnapshot }
   | { type: 'transcript-line'; line: TranscriptLine }
-  | { type: 'project-intel-updated'; intel: ProjectIntel };
+  | { type: 'project-intel-updated'; intel: ProjectIntel }
+  | { type: 'arsenal-updated'; arsenal: ProjectArsenal };
 
 export const SERVER_PORT = 8123;
 export const WS_PATH = '/ws';
