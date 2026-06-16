@@ -65,6 +65,7 @@ export interface UiStrings {
   hooks: string;
   subagents: string;
   usedThisSession: string;
+  scanningProject: string;
 }
 
 const EN: UiStrings = {
@@ -134,6 +135,7 @@ const EN: UiStrings = {
   hooks: 'Hooks',
   subagents: 'Subagents',
   usedThisSession: 'used',
+  scanningProject: 'Scanning project…',
 };
 
 const PL: UiStrings = {
@@ -203,6 +205,7 @@ const PL: UiStrings = {
   hooks: 'Hooki',
   subagents: 'Subagenci',
   usedThisSession: 'użyto',
+  scanningProject: 'Skanuję projekt…',
 };
 
 const IT: UiStrings = {
@@ -272,6 +275,7 @@ const IT: UiStrings = {
   hooks: 'Hook',
   subagents: 'Subagenti',
   usedThisSession: 'usato',
+  scanningProject: 'Scansione progetto…',
 };
 
 const UI: Record<Lang, UiStrings> = { en: EN, pl: PL, it: IT };

@@ -29,33 +29,33 @@ export function ArchitectHall() {
       className="hud-panel px"
       style={{ position: 'absolute', top: 60, right: 16, width: 360, maxHeight: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column', zIndex: 9, overflow: 'hidden' }}
     >
-      <Header arsenal={arsenal} projectDir={selected} sessionCount={sessionCount} title={t.arsenal} />
-      {arsenal ? <Body arsenal={arsenal} wielded={wielded} t={t} /> : <EmptyBody />}
+      <Header arsenal={arsenal} projectDir={selected} sessionCount={sessionCount} t={t} />
+      {arsenal ? <Body arsenal={arsenal} wielded={wielded} t={t} /> : <EmptyBody t={t} />}
     </div>
   );
 }
 
-function Header({ arsenal, projectDir, sessionCount, title }: { arsenal: ProjectArsenal | undefined; projectDir: string; sessionCount: number; title: string }) {
+function Header({ arsenal, projectDir, sessionCount, t }: { arsenal: ProjectArsenal | undefined; projectDir: string; sessionCount: number; t: Ui }) {
   const name = arsenal?.projectName ?? projectDir.split(/[\\/]/).pop() ?? projectDir;
   const refreshed = arsenal ? relTime(new Date(arsenal.refreshedAt).toISOString(), Date.now(), 'now') : '—';
   return (
     <div style={{ padding: '10px 12px', borderBottom: '2px solid #3a3a36', background: '#2a2926', display: 'flex', flexDirection: 'column', gap: 4 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 16, color: '#f1efe8', textShadow: '1px 1px 0 #000' }}>🏛️ {name}</span>
-        <span style={{ fontSize: 10, color: '#a8a69d' }}>{title} · {refreshed}</span>
+        <span style={{ fontSize: 10, color: '#a8a69d' }}>{t.arsenal} · {refreshed}</span>
       </div>
-      <div style={{ fontSize: 11, color: '#a8a69d' }}>👥 {sessionCount} active</div>
+      <div style={{ fontSize: 11, color: '#a8a69d' }}>👥 {sessionCount} {t.active.toLowerCase()}</div>
     </div>
   );
 }
 
-function EmptyBody() {
+function EmptyBody({ t }: { t: Ui }) {
   return (
     <div style={{ padding: 16, fontSize: 12, color: '#a8a69d', textAlign: 'center' }}>
       <div style={{ fontSize: 24, marginBottom: 8 }}>🔍</div>
-      Scanning project…
+      {t.scanningProject}
       <div style={{ fontSize: 10, marginTop: 8, color: '#6b6a63' }}>
-        Reading <code>.claude/</code> skills · MCP · hooks · agents
+        {t.skills} · {t.connectors} · {t.hooks} · {t.subagents}
       </div>
     </div>
   );
