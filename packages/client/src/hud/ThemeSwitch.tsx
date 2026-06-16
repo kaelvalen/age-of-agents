@@ -92,7 +92,7 @@ export function ThemeSwitch() {
         </button>
 
         {langOpen && (
-          <div className="hud-panel px hud-dd-menu" id="lang-menu" role="menu" aria-label="Language">
+          <div className="hud-panel px hud-dd-menu" id="lang-menu" role="menu" aria-label={t.language}>
             {LANGS.map((l) => (
               <button
                 key={l.id}

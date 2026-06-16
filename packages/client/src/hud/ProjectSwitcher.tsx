@@ -73,6 +73,7 @@ export function ProjectSwitcher() {
   const heroes = useWorld((s) => s.heroes);
   const selected = useWorld((s) => s.selectedProjectDir);
   const selectProject = useWorld((s) => s.selectProject);
+  const connected = useWorld((s) => s.connected);
   const t = useUi();
 
   const [open, setOpen] = useState(false);
@@ -125,8 +126,13 @@ export function ProjectSwitcher() {
   // Inaczej trigger pokazuje miasto z licznikiem 0, lista go nie zawiera, a mapa/panel
   // architekta zostają odfiltrowane do pustego projektu — wszystko „znika" bez śladu.
   useEffect(() => {
-    if (selected !== undefined && !cities.has(selected)) selectProject(undefined);
-  }, [selected, cities, selectProject]);
+    // Reset TYLKO gdy realnie połączeni i świat NIE jest pusty. Pusty snapshot przy
+    // reconnekcie/restarcie serwera ≠ „miasto skończyło pracę" — inaczej wybór gubiłby się
+    // bezpowrotnie przy każdym restarcie dev-servera.
+    if (connected && Object.keys(heroes).length > 0 && selected !== undefined && !cities.has(selected)) {
+      selectProject(undefined);
+    }
+  }, [connected, heroes, selected, cities, selectProject]);
 
   // Pokaż TYLKO miasta z aktywnymi sesjami (count > 0).
   const activeCities = [...cities.values()].filter((c) => c.count > 0);
@@ -175,7 +181,7 @@ export function ProjectSwitcher() {
         <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1, textAlign: 'left' }}>
           <span style={{ fontSize: 12, color: '#a8a69d' }}>{t.cities}</span>
           <span style={{ fontSize: 11 }}>
-            {activeCities.length} <span style={{ color: '#a8a69d' }}>· {totalSessions} {t.agents}</span>
+            {activeCities.length} <span style={{ color: '#a8a69d' }}>· {totalSessions} {t.sessions}</span>
           </span>
         </div>
 

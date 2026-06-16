@@ -55,6 +55,7 @@ export interface UiStrings {
   cities: string;
   agents: string;
   allCities: string;
+  language: string;
   symbols: string;
   edges: string;
   communities: string;
@@ -117,6 +118,7 @@ const EN: UiStrings = {
   cities: 'CITIES',
   agents: 'agents',
   allCities: 'All',
+  language: 'Language',
   symbols: 'Symbols',
   edges: 'Edges',
   communities: 'Communities',
@@ -179,6 +181,7 @@ const PL: UiStrings = {
   cities: 'MIASTA',
   agents: 'agentów',
   allCities: 'Wszystkie',
+  language: 'Język',
   symbols: 'Symbole',
   edges: 'Krawędzie',
   communities: 'Społeczności',
@@ -241,6 +244,7 @@ const IT: UiStrings = {
   cities: 'CITTÀ',
   agents: 'agenti',
   allCities: 'Tutte',
+  language: 'Lingua',
   symbols: 'Simboli',
   edges: 'Archi',
   communities: 'Comunità',
