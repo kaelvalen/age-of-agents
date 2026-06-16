@@ -23,3 +23,12 @@ koda-memory.md
 
 # Local-only asset generation scripts (consume Pixellab credits)
 scripts/generate-*.py
+
+# Python build artifacts
+__pycache__/
+*.pyc
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
