@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useSettings, type Lang } from '../settings';
 import { useUi } from '../i18n';
 import { HooksPanel } from './HooksPanel';
+import { useMenuKeyboard } from './useMenuKeyboard';
 
 /** Lista języków do dropdownu: endonimy (nazwa w danym języku) + flaga + krótki kod. */
 const LANGS: { id: Lang; label: string; flag: string }[] = [
@@ -21,6 +22,7 @@ export function ThemeSwitch() {
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
   const langTriggerRef = useRef<HTMLButtonElement>(null);
+  const langMenuRef = useRef<HTMLDivElement>(null);
 
   // Zamknij menu języka po kliknięciu poza nim lub naciśnięciu Esc (jak w ProjectSwitcher).
   useEffect(() => {
@@ -47,6 +49,9 @@ export function ThemeSwitch() {
     setLangOpen(false);
     if (langRef.current?.contains(document.activeElement)) langTriggerRef.current?.focus();
   };
+
+  // Nawigacja klawiaturą w rozwiniętym menu języka (strzałki/Home/End + focus po otwarciu).
+  useMenuKeyboard(langOpen, langMenuRef);
 
   return (
     <div className="hud-panel" style={{ top: 12, left: 12, padding: 6, display: 'flex', gap: 6 }}>
@@ -92,7 +97,7 @@ export function ThemeSwitch() {
         </button>
 
         {langOpen && (
-          <div className="hud-panel px hud-dd-menu" id="lang-menu" role="menu" aria-label={t.language}>
+          <div ref={langMenuRef} className="hud-panel px hud-dd-menu" id="lang-menu" role="menu" aria-label={t.language}>
             {LANGS.map((l) => (
               <button
                 key={l.id}

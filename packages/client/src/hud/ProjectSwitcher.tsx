@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, useEffect, type ReactNode } from 'react';
 import { useWorld } from '../store';
 import { useUi } from '../i18n';
+import { useMenuKeyboard } from './useMenuKeyboard';
 import type { AgentKind, HeroStateKind } from '@agent-citadel/shared';
 
 const AGENT_BADGE: Record<AgentKind, { label: string; color: string } | undefined> = {
@@ -79,6 +80,7 @@ export function ProjectSwitcher() {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const cities = useMemo<Map<string, CityInfo>>(() => {
     const acc = new Map<string, CityInfo>();
@@ -129,21 +131,27 @@ export function ProjectSwitcher() {
     // Reset TYLKO gdy realnie połączeni i świat NIE jest pusty. Pusty snapshot przy
     // reconnekcie/restarcie serwera ≠ „miasto skończyło pracę" — inaczej wybór gubiłby się
     // bezpowrotnie przy każdym restarcie dev-servera.
-    if (connected && Object.keys(heroes).length > 0 && selected !== undefined && !cities.has(selected)) {
+    const selectable = new Set<string>(cities.keys());
+    if (connected && Object.keys(heroes).length > 0 && selected !== undefined && !selectable.has(selected)) {
       selectProject(undefined);
     }
   }, [connected, heroes, selected, cities, selectProject]);
+
+  // Nawigacja klawiaturą wewnątrz rozwiniętej listy (ArrowUp/Down/Home/End + focus po otwarciu).
+  useMenuKeyboard(open, menuRef);
 
   // Pokaż TYLKO miasta z aktywnymi sesjami (count > 0).
   const activeCities = [...cities.values()].filter((c) => c.count > 0);
   // Sortuj malejąco po aktywnych sesjach, potem alfabetycznie.
   activeCities.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 
-  if (activeCities.length === 0) return null; // brak agentów = brak paska (czysty widok)
+  const displayCities = activeCities;
+
+  if (displayCities.length === 0) return null; // brak aktywnych miast = czysty widok
 
   const totalSessions = activeCities.reduce((sum, c) => sum + c.count, 0);
-  // Wybrane miasto (jeśli istnieje i wciąż aktywne); inaczej trigger pokaże „All".
-  const selectedCity = selected !== undefined ? activeCities.find((c) => c.dir === selected) : undefined;
+  // Wybrane miasto (z sesją lub domowe); inaczej trigger pokaże „All".
+  const selectedCity = selected !== undefined ? displayCities.find((c) => c.dir === selected) : undefined;
 
   const choose = (dir?: string) => {
     selectProject(dir);
@@ -222,7 +230,7 @@ export function ProjectSwitcher() {
 
       {/* ── Rozwijana lista miast ── */}
       {open && (
-        <div className="hud-panel px proj-dropdown" id="proj-city-menu" role="menu" aria-label={t.cities}>
+        <div ref={menuRef} className="hud-panel px proj-dropdown" id="proj-city-menu" role="menu" aria-label={t.cities}>
           <OptionRow
             icon="🌍"
             label={t.allCities}
@@ -231,7 +239,7 @@ export function ProjectSwitcher() {
             onClick={() => choose(undefined)}
           />
           <div role="none" style={{ height: 2, background: '#3a3a36' }} />
-          {activeCities.map((city) => (
+          {displayCities.map((city) => (
             <OptionRow
               key={city.dir}
               icon="🏛️"
