@@ -38,6 +38,7 @@ export const DEFAULT_THRESHOLDS: StateThresholds = {
 export class SessionTracker {
   private seenUsage = new Set<string>();
   private _tokens = { input: 0, output: 0 };
+  private contextTokens?: number;
   /** Publiczny getter do porównywania z nowymi wartościami (np. w OpenCode pollerze). */
   get tokens(): { input: number; output: number } {
     return this._tokens;
@@ -89,6 +90,7 @@ export class SessionTracker {
       state: 'idle',
       tokens: this.tokens,
       recentActions: this.recentActions,
+      contextTokens: this.contextTokens,
       wielded: this.wielded(),
       startedAt: now,
       lastActivityAt: now,
@@ -189,7 +191,8 @@ export class SessionTracker {
             input: this.tokens.input + fact.input,
             output: this.tokens.output + fact.output,
           };
-          this.patch({ tokens: this._tokens });
+          if (typeof fact.context === 'number') this.contextTokens = fact.context;
+          this.patch({ tokens: this._tokens, ...(typeof fact.context === 'number' ? { contextTokens: fact.context } : {}) });
         }
         break;
 

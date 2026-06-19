@@ -71,7 +71,7 @@ function Body({ arsenal, wielded, t }: { arsenal: ProjectArsenal; wielded: Wield
   const usedSkills = new Set(wielded.skills);
   const usedConnectors = new Set(wielded.connectors);
   return (
-    <div style={{ overflowY: 'auto', flex: 1, padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div className="arsenal-scroll" style={{ overflowY: 'auto', flex: 1, padding: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
       <Section icon="🪄" label={t.skills} count={arsenal.skills.length}>
         {arsenal.skills.map((s: ArsenalSkill) => (
           <Row key={`sk-${s.id}`} name={s.id} sub={s.description} origin={s.origin} used={usedSkills.has(s.id)} usedLabel={t.usedThisSession} />
@@ -102,7 +102,7 @@ function Section({ icon, label, count, children }: { icon: string; label: string
     <div>
       <button
         onClick={() => setOpen((o) => !o)}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 6, background: '#45443f', color: '#f1efe8', border: 'none', padding: '6px 8px', fontSize: 12, cursor: 'pointer', fontFamily: 'Pixelify Sans, system-ui, sans-serif', textShadow: '1px 1px 0 #000' }}
+        style={{ position: 'sticky', top: 0, zIndex: 1, width: '100%', display: 'flex', alignItems: 'center', gap: 6, background: '#45443f', color: '#f1efe8', border: 'none', padding: '6px 8px', fontSize: 12, cursor: 'pointer', fontFamily: 'Pixelify Sans, system-ui, sans-serif', textShadow: '1px 1px 0 #000' }}
       >
         <span>{open ? '▾' : '▸'}</span>
         <span>{icon} {label}</span>

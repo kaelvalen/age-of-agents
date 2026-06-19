@@ -412,6 +412,12 @@ button.ghost {
   }
 }
 
+.arsenal-scroll::-webkit-scrollbar { width: 8px; }
+.arsenal-scroll::-webkit-scrollbar-track { background: #2a2926; }
+.arsenal-scroll::-webkit-scrollbar-thumb { background: #45443f; box-shadow: inset 1px 1px 0 #5a5952, inset -1px -1px 0 #15140f; }
+.arsenal-scroll::-webkit-scrollbar-thumb:hover { background: #5a5952; }
+.arsenal-scroll { scrollbar-width: thin; scrollbar-color: #45443f #2a2926; }
+
 /* ── Modal ustawień (reakcje budynków) ── */
 .settings-overlay {
   position: fixed;

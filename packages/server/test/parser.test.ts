@@ -38,7 +38,7 @@ describe('interpretLine', () => {
       messageId: 'msg_01',
       ts: '2026-06-13T10:00:01.000Z',
     });
-    expect(facts).toContainEqual({ kind: 'usage', messageId: 'msg_01', input: 100, output: 42 });
+    expect(facts).toContainEqual({ kind: 'usage', messageId: 'msg_01', input: 100, output: 42, context: 100 });
     expect(facts).toContainEqual({ kind: 'meta', model: 'claude-fable-5', gitBranch: 'main', cwd: undefined });
   });
 
@@ -120,6 +120,20 @@ describe('interpretLine', () => {
     expect(facts).toContainEqual({
       kind: 'attribution', skill: 'superpowers:brainstorming', plugin: 'superpowers', mcpServer: 'visualize',
     });
+  });
+
+  it('liczy context z usage (input + cache_read + cache_creation)', () => {
+    const line = JSON.stringify({
+      type: 'assistant',
+      timestamp: '2026-06-17T10:00:00.000Z',
+      message: {
+        id: 'mctx',
+        usage: { input_tokens: 100, cache_read_input_tokens: 5000, cache_creation_input_tokens: 900, output_tokens: 50 },
+        content: [],
+      },
+    });
+    const usage = interpretLine(line).find((f) => f.kind === 'usage');
+    expect(usage).toMatchObject({ kind: 'usage', input: 5100, output: 50, context: 6000 });
   });
 
   it('skraca bardzo długie prompty', () => {

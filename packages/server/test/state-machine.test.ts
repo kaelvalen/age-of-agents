@@ -130,6 +130,14 @@ describe('SessionTracker', () => {
     expect(hero?.projectDir).toBe('-Users-mpawelczuk-RTS-agents'); // klucz miasta bez zmian
   });
 
+  it('contextTokens = kontekst NAJNOWSZEJ wiadomości (nie suma)', () => {
+    const world = new World();
+    const tracker = new SessionTracker(world, 'sCtx', 'PD');
+    tracker.apply({ kind: 'usage', messageId: 'm1', input: 10, output: 1, context: 1000 });
+    tracker.apply({ kind: 'usage', messageId: 'm2', input: 10, output: 1, context: 1800 });
+    expect(world.getHero('sCtx')!.contextTokens).toBe(1800);
+  });
+
   it('kumuluje wielded z faktów attribution na bohaterze', () => {
     const world = new World();
     const tracker = new SessionTracker(world, 'sX', 'PD');

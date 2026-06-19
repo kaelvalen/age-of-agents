@@ -66,6 +66,7 @@ export interface UiStrings {
   subagents: string;
   usedThisSession: string;
   scanningProject: string;
+  context: string;
   // Panel ustawień (reakcje budynków)
   settings: string;
   buildingReactions: string;
@@ -159,6 +160,7 @@ const EN: UiStrings = {
   subagents: 'Subagents',
   usedThisSession: 'used',
   scanningProject: 'Scanning project…',
+  context: 'Context',
   settings: 'Settings',
   buildingReactions: 'Building reactions',
   buildingReactionsHint: 'Pick which live-log tools each building reacts to. Edit visually or as JSON below — both stay in sync.',
@@ -251,6 +253,7 @@ const PL: UiStrings = {
   subagents: 'Subagenci',
   usedThisSession: 'użyto',
   scanningProject: 'Skanuję projekt…',
+  context: 'Kontekst',
   settings: 'Ustawienia',
   buildingReactions: 'Reakcje budynków',
   buildingReactionsHint: 'Wybierz, na jakie narzędzia z żywych logów reaguje każdy budynek. Edytuj wizualnie albo jako JSON poniżej — oba są zsynchronizowane.',
@@ -343,6 +346,7 @@ const IT: UiStrings = {
   subagents: 'Subagenti',
   usedThisSession: 'usato',
   scanningProject: 'Scansione progetto…',
+  context: 'Contesto',
   settings: 'Impostazioni',
   buildingReactions: 'Reazioni degli edifici',
   buildingReactionsHint: 'Scegli a quali strumenti dei log dal vivo reagisce ogni edificio. Modifica visivamente o come JSON qui sotto — restano sincronizzati.',

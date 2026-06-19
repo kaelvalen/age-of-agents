@@ -49,6 +49,9 @@ export interface HeroSnapshot {
   tokens: { input: number; output: number };
   /** Ostatnie użyte narzędzia (najnowsze pierwsze, max kilka) — oś aktywności w panelu. */
   recentActions?: ActionEntry[];
+  /** Bieżący rozmiar kontekstu z OSTATNIEJ wiadomości (input + cache_read + cache_creation).
+   *  ≠ tokens.input (suma kumulatywna). Brak → nie pokazuj paska kontekstu. */
+  contextTokens?: number;
   /** Co ta sesja realnie wyciągnęła z arsenału (z atrybucji transkryptu). */
   wielded?: WieldedArsenal;
   startedAt: string;
