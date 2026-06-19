@@ -55,6 +55,9 @@ export interface HeroSnapshot {
   contextTokens?: number;
   /** Co ta sesja realnie wyciągnęła z arsenału (z atrybucji transkryptu). */
   wielded?: WieldedArsenal;
+  /** Tożsamość kontenera Docker, jeśli sesja działa w kontenerze (źródło Docker).
+   *  Brak → sesja hostowa. Steruje odznaką kontenera w panelu. */
+  container?: { id: string; name: string; image: string };
   startedAt: string;
   lastActivityAt: string;
 }

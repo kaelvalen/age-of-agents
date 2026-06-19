@@ -65,6 +65,8 @@ export class SessionTracker {
     private readonly projectDir: string,
     private readonly thresholds: StateThresholds = DEFAULT_THRESHOLDS,
     private readonly agent: AgentKind = 'claude',
+    /** Statyczne pola domieszane do bohatera (np. `container`). Zachowane przy każdym patch. */
+    private readonly extra: Partial<HeroSnapshot> = {},
   ) {}
 
   private wielded(): WieldedArsenal {
@@ -94,6 +96,7 @@ export class SessionTracker {
       wielded: this.wielded(),
       startedAt: now,
       lastActivityAt: now,
+      ...this.extra,
     };
   }
 
