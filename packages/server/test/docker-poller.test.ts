@@ -20,12 +20,17 @@ describe('SessionTracker — extra (container)', () => {
   });
 });
 
-/** Fake: kontenery + ich pliki (ścieżka → treść). Routuje exec po treści skryptu sh. */
+/**
+ * Fake: kontenery + ich pliki (ścieżka → treść). Routuje exec po treści skryptu sh.
+ * `tailContent` (opcjonalne) to „prawdziwy" stan pliku w chwili `tail` — gdy różni się
+ * od `files` (które mierzy `wc -c`), symuluje wzrost pliku między `wc` a `tail`.
+ */
 class FakeDockerClient implements DockerClient {
   constructor(
     public up = true,
     public containers: ContainerInfo[] = [],
-    public files: Record<string, Record<string, string>> = {}, // id → { path: content }
+    public files: Record<string, Record<string, string>> = {}, // id → { path: content } (mierzone przez LIST)
+    public tailContent: Record<string, Record<string, string>> = {}, // id → { path: content } (zwracane przez tail)
   ) {}
   async available(): Promise<boolean> {
     return this.up;
@@ -50,8 +55,10 @@ class FakeDockerClient implements DockerClient {
     if (script.startsWith('tail')) {
       const offset = Number(argv[4]); // 1-based
       const file = argv[5];
-      const content = fs[file] ?? '';
-      return { code: 0, stdout: content.slice(offset - 1), stderr: '' };
+      const maxBytes = Number(argv[6]); // limit head -c
+      const src = (this.tailContent[id] ?? this.files[id] ?? {})[file] ?? fs[file] ?? '';
+      const start = offset - 1;
+      return { code: 0, stdout: src.slice(start, start + maxBytes), stderr: '' };
     }
     return { code: 127, stdout: '', stderr: 'unknown command' };
   }
@@ -65,6 +72,12 @@ const promptLine =
     timestamp: '2026-06-20T10:00:00.000Z',
     sessionId: 'sess-1',
     content: 'Napraw testy auth',
+  }) + '\n';
+const endLine =
+  JSON.stringify({
+    type: 'assistant',
+    timestamp: '2026-06-20T10:00:05.000Z',
+    message: { id: 'm1', model: 'claude-opus-4-8', stop_reason: 'end_turn', content: [{ type: 'text', text: 'Gotowe.' }] },
   }) + '\n';
 
 describe('DockerPoller', () => {
@@ -101,7 +114,7 @@ describe('DockerPoller', () => {
     expect(world.getHero('sess-1')).toBeDefined(); // host zostaje
   });
 
-  it('kontener bez ~/.claude → brak bohatera, sonda nie powtarzana', async () => {
+  it('kontener bez ~/.claude → brak bohatera', async () => {
     const world = new World();
     const client = new FakeDockerClient(true, [{ id: 'empty1', name: 'db', image: 'postgres:16' }], { empty1: {} });
     const poller = new DockerPoller(world, client, 999_999);
@@ -145,18 +158,47 @@ describe('DockerPoller', () => {
     const client = new FakeDockerClient(true, [{ id: 'abc123', name: 'devbox', image: 'node:20' }], files);
     const poller = new DockerPoller(world, client, 999_999);
     await poller.start(); // tura 1: prompt
+    expect(world.getHero('docker:abc123:sess-1')?.state).toBe('thinking');
 
-    // Dopisz turn-end do pliku, druga tura ma go skonsumować (stan → returning).
-    const endLine =
-      JSON.stringify({
-        type: 'assistant',
-        timestamp: '2026-06-20T10:00:05.000Z',
-        message: { id: 'm1', model: 'claude-opus-4-8', stop_reason: 'end_turn', content: [{ type: 'text', text: 'Gotowe.' }] },
-      }) + '\n';
+    // Plik urósł o turn-end; druga tura ma go skonsumować (stan → returning).
     files.abc123[FILE] = promptLine + endLine;
     await poller.poll();
     poller.stop();
 
     expect(world.getHero('docker:abc123:sess-1')?.state).toBe('returning');
+  });
+
+  it('okno wzrostu: tail ograniczony do zmierzonego rozmiaru — nie czyta przedwcześnie bajtów ponad wc -c', async () => {
+    const world = new World();
+    // LIST/wc widzi tylko promptLine; ale „prawdziwy" plik (tail) ma już promptLine+endLine
+    // (urósł między wc a tail). Cap `head -c` musi przyciąć do rozmiaru promptLine.
+    const client = new FakeDockerClient(
+      true,
+      [{ id: 'abc123', name: 'devbox', image: 'node:20' }],
+      { abc123: { [FILE]: promptLine } }, // wc -c → rozmiar promptLine
+      { abc123: { [FILE]: promptLine + endLine } }, // tail widzi więcej (wzrost)
+    );
+    const poller = new DockerPoller(world, client, 999_999);
+    await poller.start();
+    poller.stop();
+
+    // Gdyby tail nie był ograniczony, endLine zostałby skonsumowany → 'returning'.
+    // Z capem widzimy tylko promptLine → 'thinking'.
+    expect(world.getHero('docker:abc123:sess-1')?.state).toBe('thinking');
+  });
+
+  it('re-sondaż: kontener nieagentowy, który później dostaje sesję, zostaje wykryty', async () => {
+    const world = new World();
+    const files: Record<string, Record<string, string>> = { abc123: {} }; // start: pusto → non-agentic
+    const client = new FakeDockerClient(true, [{ id: 'abc123', name: 'devbox', image: 'node:20' }], files);
+    const poller = new DockerPoller(world, client, 999_999, 1); // re-sonduj co 1 cykl
+    await poller.start(); // cykl 1: non-agentic
+    expect(world.getHero('docker:abc123:sess-1')).toBeUndefined();
+
+    files.abc123[FILE] = promptLine; // agent wstał później
+    await poller.poll(); // cykl 2: re-sondaż → agentic → odczyt
+    poller.stop();
+
+    expect(world.getHero('docker:abc123:sess-1')).toBeDefined();
   });
 });
