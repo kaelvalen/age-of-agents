@@ -1,11 +1,13 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useUi } from '../i18n';
 import { BuildingReactionsEditor } from './BuildingReactionsEditor';
+import { ModelRegistryEditor } from './ModelRegistryEditor';
 
 /** Modal ustawień. Sekcjonowany — na razie jedna sekcja: reakcje budynków. */
 export function SettingsPanel({ onClose }: { onClose: () => void }) {
   const t = useUi();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const [tab, setTab] = useState<'buildings' | 'models'>('buildings');
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -58,11 +60,29 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <strong className="px" style={{ fontSize: 16, color: '#fac775' }}>
-            ⚙ {t.settings} · {t.buildingReactions}
+            ⚙ {t.settings}
           </strong>
           <button className="ghost" onClick={onClose} aria-label={t.notifClose}>✕</button>
         </div>
-        <BuildingReactionsEditor />
+        <div className="settings-tabs" role="tablist">
+          <button
+            role="tab"
+            aria-selected={tab === 'buildings'}
+            className={`settings-tab${tab === 'buildings' ? ' active' : ''}`}
+            onClick={() => setTab('buildings')}
+          >
+            {t.tabBuildingReactions}
+          </button>
+          <button
+            role="tab"
+            aria-selected={tab === 'models'}
+            className={`settings-tab${tab === 'models' ? ' active' : ''}`}
+            onClick={() => setTab('models')}
+          >
+            {t.tabModels}
+          </button>
+        </div>
+        {tab === 'buildings' ? <BuildingReactionsEditor /> : <ModelRegistryEditor />}
       </div>
     </div>
   );

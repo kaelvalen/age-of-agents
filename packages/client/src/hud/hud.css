@@ -566,3 +566,26 @@ button.ghost {
 .bre-json.invalid {
   border-color: #e24b4a;
 }
+
+/* Zakładki ustawień. */
+.settings-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #45443f;
+}
+.settings-tab {
+  background: none;
+  border: 0;
+  color: #a8a69d;
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+.settings-tab:hover { color: #f1efe8; }
+.settings-tab.active {
+  color: #fac775;
+  border-bottom-color: #fac775;
+}
