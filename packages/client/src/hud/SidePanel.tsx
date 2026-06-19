@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { resolveBuilding, type AgentKind, type BuildingId, type HeroStateKind, type TranscriptLine } from '@agent-citadel/shared';
 import { useWorld } from '../store';
 import { useMapping } from '../mapping-store';
+import { useModels } from '../model-store';
+import { resolveSprite, resolveContextWindow } from '../theme/models';
 import { useSettings } from '../settings';
 import { useUi, buildingText } from '../i18n';
 import { teamColorHex } from '../game/placeholders';
@@ -69,6 +71,7 @@ export function SidePanel() {
   const themeId = useSettings((s) => s.themeId);
   const lang = useSettings((s) => s.lang);
   const mapping = useMapping((s) => s.mapping); // re-render gdy user przemapuje narzędzia
+  const models = useModels((s) => s.models);
   const t = useUi();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -128,7 +131,7 @@ export function SidePanel() {
               ) : null;
             })()}
             <div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>
-              {hero.model ?? t.modelUnknown}
+              {resolveSprite(hero.model, models).displayName ?? hero.model ?? t.modelUnknown}
               {hero.gitBranch ? ` · ⎇ ${hero.gitBranch}` : ''}
               {hero.permissionMode ? ` · ${hero.permissionMode}` : ''}
             </div>
@@ -184,7 +187,11 @@ export function SidePanel() {
       </div>
 
       {typeof hero.contextTokens === 'number' && (
-        <ContextBar tokens={hero.contextTokens} model={hero.model} label={t.context} />
+        <ContextBar
+          tokens={hero.contextTokens}
+          windowSize={resolveContextWindow(hero.model, models)}
+          label={t.context}
+        />
       )}
 
       {mission && (

@@ -1,12 +1,7 @@
-/** Okno kontekstu modelu w tokenach. Default 200k; 1M dla modeli z dużym oknem. */
-export function contextWindow(model?: string): number {
-  if (model && /1m|\[1m\]/i.test(model)) return 1_000_000;
-  return 200_000;
-}
-
-/** Procent zapełnienia okna kontekstu, 0..100 (zaokrąglony, clamp). */
-export function contextPct(tokens: number, model?: string): number {
-  return Math.min(100, Math.round((tokens / contextWindow(model)) * 100));
+/** Procent zapełnienia okna kontekstu, 0..100 (zaokrąglony, clamp). Okno podane z zewnątrz. */
+export function contextPct(tokens: number, windowSize: number): number {
+  if (!(windowSize > 0)) return 0;
+  return Math.min(100, Math.round((tokens / windowSize) * 100));
 }
 
 /** Kolor wypełnienia wg %: zielony ≤10 → żółty ≤50 → ku czerwieni do 100. */

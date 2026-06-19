@@ -1,11 +1,11 @@
 import { formatK } from '../util';
-import { contextPct, contextColor, contextWindow } from './context-bar';
+import { contextPct, contextColor } from './context-bar';
 
 const SEGMENTS = 24;
 
-/** Segmentowany pixel-pasek zapełnienia okna kontekstu (per-bohater). */
-export function ContextBar({ tokens, model, label }: { tokens: number; model?: string; label: string }) {
-  const pct = contextPct(tokens, model);
+/** Segmentowany pixel-pasek zapełnienia okna kontekstu (per-bohater). Czysty: dostaje gotowe okno. */
+export function ContextBar({ tokens, windowSize, label }: { tokens: number; windowSize: number; label: string }) {
+  const pct = contextPct(tokens, windowSize);
   const c = contextColor(pct);
   const filled = Math.round((SEGMENTS * pct) / 100);
   return (
@@ -13,7 +13,7 @@ export function ContextBar({ tokens, model, label }: { tokens: number; model?: s
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, opacity: 0.7, marginBottom: 5 }}>
         <span className="px" style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
         <span>
-          <span style={{ color: c }}>{pct}%</span> · {formatK(tokens)} / {formatK(contextWindow(model))}
+          <span style={{ color: c }}>{pct}%</span> · {formatK(tokens)} / {formatK(windowSize)}
         </span>
       </div>
       <div style={{ display: 'flex', gap: 2 }}>
