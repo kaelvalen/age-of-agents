@@ -286,17 +286,19 @@
 
 .minimap {
   bottom: 12px;
-  right: 12px;
+  right: 56px;
   padding: 6px;
 }
 
 .zoom-controls {
-  bottom: 156px;
+  bottom: 12px;
   right: 12px;
   padding: 6px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-height: 120px;
+  justify-content: center;
 }
 
 .zoom-controls button.ghost {
