@@ -6,9 +6,9 @@ import type { Fact } from './transcript/facts.js';
 import { toolDetail } from './transcript/parser.js';
 
 /**
- * Hooki HTTP Claude Code — szybki kanał zdarzeń (typ "http" w settings.json).
- * Transkrypty pozostają źródłem prawdy (tokeny, treści); hooki dają
- * natychmiastowe animacje bez ~1 s opóźnienia watchera.
+ * Claude Code HTTP hooks: fast event channel (type "http" in settings.json).
+ * Transcripts remain the source of truth (tokens, content); hooks provide
+ * immediate animations without the watcher's ~1s delay.
  */
 
 export const HOOK_URL = `http://localhost:${SERVER_PORT}/hooks`;
@@ -83,7 +83,7 @@ export function translateHook(payload: HookPayload): { sessionId: string; projec
   return facts.length > 0 ? { sessionId, projectDir, cwd: payload.cwd, facts } : null;
 }
 
-// --- Instalator: merge wpisów hooków do ~/.claude/settings.json ---
+// --- Installer: merge hook entries into ~/.claude/settings.json ---
 
 function settingsPath(): string {
   return join(homedir(), '.claude', 'settings.json');
@@ -149,14 +149,14 @@ export async function hooksStatus(): Promise<{ installed: boolean; needsMigratio
   return { installed, needsMigration: hasLegacy || (hasAny && !installed) };
 }
 
-/** Dopisuje nasze hooki (merge — cudzych wpisów nie rusza). Robi backup. */
+/** Adds our hooks (merge; does not touch others' entries). Creates backup. */
 export async function installHooks(): Promise<void> {
   const path = settingsPath();
   const settings = await readSettings();
   try {
     await copyFile(path, join(dirname(path), 'settings.json.citadel-backup'));
   } catch {
-    // brak pliku — nie ma czego backupować
+    // no file: nothing to back up
   }
   settings.hooks ??= {};
   for (const event of HOOK_EVENTS) {
@@ -170,7 +170,7 @@ export async function installHooks(): Promise<void> {
   await writeFile(path, `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
 }
 
-/** Usuwa wyłącznie nasze wpisy (rozpoznawane po URL). */
+/** Removes only our entries (recognized by URL). */
 export async function uninstallHooks(): Promise<void> {
   const settings = await readSettings();
   if (!settings.hooks) return;
