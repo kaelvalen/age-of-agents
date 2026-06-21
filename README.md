@@ -139,6 +139,7 @@ npm run build # production client + bundled CLI (dist/cli.js)
 - Transcripts are read **locally and read-only**; their contents are never written to disk by Age of Agents or sent anywhere.
 - Installing the optional Claude Code hooks modifies `~/.claude/settings.json` (a fast event channel). Demo mode touches nothing of yours.
 - **Optional interactive mode (off by default).** You can let the panel answer Claude Code permission prompts and plan approvals via the local hooks. It stays `127.0.0.1`-only; with the mode off, Age of Agents remains a passive read-only observer. When on, an unanswered prompt (timeout or app closed) always falls back to the terminal — the app never auto-allows. "Always allow" rules live in `~/.age-of-agents/permission-policy.json`; the app never edits the permission rules in `~/.claude/settings.json`.
+- **Optional: launch agents from the app.** With the Claude Agent SDK installed (`npm i @anthropic-ai/claude-agent-sdk`), a **🚀 Launch agent** button lets you start a Claude Code session from the panel — pick a folder, type a prompt, choose a permission mode. These app-owned sessions are real Claude Code runs (they use your account and tokens) and you answer their permission prompts, plan approvals and multiple-choice questions (a centered "agent question" modal) directly in the panel. The SDK is an optional dependency; without it the button is hidden and nothing changes.
 
 ## 🎭 Assets
 
