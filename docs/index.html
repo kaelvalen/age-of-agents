@@ -168,6 +168,7 @@
     <a class="lnk" href="#worlds">Worlds</a>
     <a class="lnk" href="#how">How it works</a>
     <a class="lnk" href="#make-it-yours">Make it yours</a>
+    <a class="lnk" href="#launch-agent">Launch agent</a>
     <a class="lnk" href="#start">Get started</a>
     <a class="btn" href="https://github.com/agentsmill/age-of-agents" target="_blank" rel="noopener">★ GitHub</a>
     <a class="btn" href="https://ko-fi.com/powerczuk" target="_blank" rel="noopener">☕ Support</a>
@@ -279,6 +280,31 @@
         <div class="card rv" data-d="3"><span class="ic">🌍</span><h3>Speaks your language</h3><p>The whole interface in English, Polski or Italiano — switch it any time.</p></div>
         <div class="card rv" data-d="4"><span class="ic">🔀</span><h3>Your view, your way</h3><p>Mirror the entire city horizontally, flip between the Fantasy and Sci-Fi worlds, and let the camera follow any settler.</p></div>
       </div>
+    </div>
+  </section>
+
+  <section id="launch-agent">
+    <div class="wrap">
+      <div class="sec-head rv">
+        <span class="eyebrow">Launch agents — BETA</span>
+        <h2>Start a Claude Code agent from the panel</h2>
+        <p>With the optional Claude Agent SDK installed, a <b>🚀 Launch agent</b> button lets you start a real Claude Code session from inside the realm — pick a folder, type a prompt, and answer its permission prompts, plan approvals and multiple-choice questions right in the panel. Real runs use your account and tokens.</p>
+      </div>
+      <div class="term rv" data-d="1">
+        <div class="top"><i style="background:#8fc065"></i><i style="background:#e0b64a"></i><i style="background:#7fb6c4"></i><span class="t">zsh — launch setup</span></div>
+<pre><span class="c"># 1. install the optional SDK</span>
+<span class="p">❯</span> <span class="cmd">npm i <span class="g">@anthropic-ai/claude-agent-sdk</span></span>
+
+<span class="c"># 2. authenticate with your subscription (one time, opens a browser)</span>
+<span class="p">❯</span> <span class="cmd">claude <span class="g">setup-token</span></span>          <span class="c"># prints a token</span>
+<span class="p">❯</span> <span class="cmd">export CLAUDE_CODE_OAUTH_TOKEN=<span class="g">&lt;token&gt;</span></span>
+<span class="p">❯</span> <span class="cmd">unset ANTHROPIC_API_KEY</span>          <span class="c"># or it takes precedence</span>
+
+<span class="c"># 3. start the app from THAT shell, then click 🚀 Launch agent</span>
+<span class="p">❯</span> <span class="cmd">npx <span class="g">age-of-agents</span></span>
+</pre>
+      </div>
+      <p class="rv" data-d="2" style="text-align:center; opacity:.75; font-size:14px; margin-top:14px">The SDK is optional — without it the button stays hidden. Without the token, launches fail with <code>401 Invalid authentication credentials</code>. Usage bills against your Claude subscription (the OAuth token), not the metered API.</p>
     </div>
   </section>
 
