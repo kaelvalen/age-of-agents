@@ -8,17 +8,26 @@ import { clip } from '../util';
 /** Card shown in the side panel when the selected hero has an open question. */
 export function PendingQuestionCard({ sessionId }: { sessionId: string }) {
   const pending = useWorld((s) => s.pending);
+  const heroState = useWorld((s) => s.heroes[sessionId]?.state);
   const t = useUi();
-  const question: PendingQuestion | undefined = useMemo(
-    () => Object.values(pending).find((q) => q.sessionId === sessionId),
-    [pending, sessionId],
-  );
+  const question: PendingQuestion | undefined = useMemo(() => {
+    const mine = Object.values(pending).filter((q) => q.sessionId === sessionId);
+    // Prefer an actionable question (permission/plan) over a display-only one.
+    return mine.find((q) => q.kind !== 'ask-user-question') ?? mine[0];
+  }, [pending, sessionId]);
   if (!question) return null;
+
+  // AskUserQuestion is display-only (hooks can't answer it). Show it only while
+  // the agent is actually awaiting input; once answered in the terminal the hero
+  // leaves awaiting-input and the stale card disappears.
+  if (question.kind === 'ask-user-question' && heroState !== 'awaiting-input') return null;
 
   const title =
     question.kind === 'plan-approval' ? t.pqPlanTitle
     : question.kind === 'ask-user-question' ? t.pqQuestionTitle
     : t.pqPermissionTitle;
+
+  const isQuestion = question.kind === 'ask-user-question';
 
   return (
     <div
@@ -37,12 +46,16 @@ export function PendingQuestionCard({ sessionId }: { sessionId: string }) {
         <b style={{ color: '#ef9f27' }}>{title}</b>
       </div>
 
-      {(question.tool || question.detail) && (
-        <div style={{ fontFamily: 'monospace', fontSize: 12, opacity: 0.9, wordBreak: 'break-word' }}>
-          {question.tool ? <b>{question.tool}</b> : null}
-          {question.detail ? <span> · {clip(question.detail, 120)}</span> : null}
-        </div>
-      )}
+      {isQuestion
+        ? question.detail && (
+            <div style={{ fontSize: 13, opacity: 0.95, wordBreak: 'break-word' }}>{clip(question.detail, 220)}</div>
+          )
+        : (question.tool || question.detail) && (
+            <div style={{ fontFamily: 'monospace', fontSize: 12, opacity: 0.9, wordBreak: 'break-word' }}>
+              {question.tool ? <b>{question.tool}</b> : null}
+              {question.detail ? <span> · {clip(question.detail, 120)}</span> : null}
+            </div>
+          )}
 
       {question.kind === 'tool-permission' && (
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -59,8 +72,20 @@ export function PendingQuestionCard({ sessionId }: { sessionId: string }) {
         </div>
       )}
 
-      {question.kind === 'ask-user-question' && (
-        <div style={{ opacity: 0.7, fontSize: 12 }}>{t.pqAnswerInTerminal}</div>
+      {isQuestion && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {question.options && question.options.length > 0 && (
+            <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {question.options.map((o, i) => (
+                <li key={i}>
+                  <b>{o.label}</b>
+                  {o.description ? <span style={{ opacity: 0.7 }}> — {o.description}</span> : null}
+                </li>
+              ))}
+            </ul>
+          )}
+          <div style={{ opacity: 0.7, fontSize: 12 }}>{t.pqAnswerInTerminal}</div>
+        </div>
       )}
     </div>
   );

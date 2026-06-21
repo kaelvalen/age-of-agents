@@ -4,10 +4,45 @@ import {
   type PermissionPolicy,
   type PermissionRule,
   type PendingQuestion,
+  type PendingQuestionOption,
 } from '@agent-citadel/shared';
 import type { PendingRegistry } from './pending-registry.js';
 import { decisionToHookOutput, type HookPayload } from './hooks.js';
 import { toolDetail } from './transcript/parser.js';
+
+/**
+ * Pulls the question text and options out of an AskUserQuestion tool input.
+ * Handles both the nested `{ questions: [{ question, options }] }` shape and a
+ * flat `{ question, options }` shape; option items may be strings or objects.
+ * Used to render the question read-only in the panel (hooks can't answer it).
+ */
+export function parseAskUserQuestion(
+  input: Record<string, unknown> | undefined,
+): { question?: string; options?: PendingQuestionOption[] } {
+  if (!input || typeof input !== 'object') return {};
+  const nested = Array.isArray((input as { questions?: unknown }).questions)
+    ? (input as { questions: unknown[] }).questions[0]
+    : input;
+  if (!nested || typeof nested !== 'object') return {};
+  const q = nested as Record<string, unknown>;
+  const question = typeof q.question === 'string' ? q.question
+    : typeof q.header === 'string' ? q.header
+    : undefined;
+  let options: PendingQuestionOption[] | undefined;
+  if (Array.isArray(q.options)) {
+    options = q.options
+      .map((o): PendingQuestionOption => {
+        if (typeof o === 'string') return { label: o };
+        const oo = (o ?? {}) as Record<string, unknown>;
+        return {
+          label: typeof oo.label === 'string' ? oo.label : String(oo.label ?? ''),
+          description: typeof oo.description === 'string' ? oo.description : undefined,
+        };
+      })
+      .filter((o) => o.label.length > 0);
+  }
+  return { question, options };
+}
 
 export interface DecideDeps {
   policy: PermissionPolicy;
@@ -37,8 +72,28 @@ export async function decideHook(
 
   switch (classification.action) {
     case 'defer':
-    case 'show-question':
       return {};
+    case 'show-question': {
+      // Hooks can't answer AskUserQuestion — but we surface it read-only in the
+      // panel so the user sees what's being asked. Broadcast a display-only card
+      // (not awaited; the terminal still handles the actual answer). The client
+      // hides it once the hero leaves the awaiting-input state.
+      const { question: questionText, options } = parseAskUserQuestion(
+        body.tool_input as Record<string, unknown> | undefined,
+      );
+      const question: PendingQuestion = {
+        id: randomUUID(),
+        sessionId,
+        source: 'hook',
+        kind: 'ask-user-question',
+        tool,
+        detail: questionText,
+        options,
+        createdAt: new Date().toISOString(),
+      };
+      void deps.registry.ask(question, deps.timeoutMs);
+      return {};
+    }
     case 'allow':
       return decisionToHookOutput('allow');
     case 'deny':
