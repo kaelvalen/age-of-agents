@@ -11,6 +11,9 @@ import { ArsenalPoller } from './arsenal/arsenal-poller.js';
 import type { SourceWatcher } from './watcher.js';
 import { PendingRegistry } from './pending-registry.js';
 import { registerPermissionPolicyRoutes } from './permission-policy-routes.js';
+import { LiveSessionRegistry } from './sdk/sessions.js';
+import { registerSessionRoutes } from './session-routes.js';
+import { registerFsRoutes } from './fs-routes.js';
 
 export interface StartServerOptions {
   /** HTTP port. Pass 0 so the system picks a free one (useful in tests). */
@@ -42,6 +45,7 @@ export async function startServer(opts: StartServerOptions): Promise<RunningServ
   let opencodePoller: OpenCodePoller | undefined;
   let dockerPoller: DockerPoller | undefined;
   let arsenalPoller: ArsenalPoller | undefined;
+  let liveSessions: LiveSessionRegistry | undefined;
 
   app.get('/health', async () => ({ ok: true, demo: opts.demo }));
 
@@ -55,6 +59,10 @@ export async function startServer(opts: StartServerOptions): Promise<RunningServ
     registerModelRoutes(app, { persist: false });
     app.post('/hooks/decide', async () => ({}));
     registerPermissionPolicyRoutes(app, { persist: false });
+    const { FakeSdkRunner } = await import('./sdk/fake-runner.js');
+    liveSessions = new LiveSessionRegistry(new FakeSdkRunner());
+    registerSessionRoutes(app, { sessions: liveSessions });
+    registerFsRoutes(app);
   } else {
     const { SourceWatcher } = await import('./watcher.js');
     const { activeSources } = await import('./sources/index.js');
@@ -80,6 +88,10 @@ export async function startServer(opts: StartServerOptions): Promise<RunningServ
     const { decideHook } = await import('./hook-decide.js');
     const { loadPermissionPolicy, addPolicyRule } = await import('./permission-policy.js');
     registerPermissionPolicyRoutes(app, { persist: true, policyPath: opts.policyPath });
+    const { RealSdkRunner } = await import('./sdk/real-runner.js');
+    liveSessions = new LiveSessionRegistry(new RealSdkRunner(pendingRegistry, (DECIDE_TIMEOUT_SEC - 10) * 1000));
+    registerSessionRoutes(app, { sessions: liveSessions });
+    registerFsRoutes(app);
 
     app.post('/hooks/decide', async (request) => {
       const body = (request.body ?? {}) as never;
@@ -186,6 +198,7 @@ export async function startServer(opts: StartServerOptions): Promise<RunningServ
     port: actualPort,
     close: async () => {
       offEvent();
+      await liveSessions?.stopAll();
       await opencodePoller?.stop();
       dockerPoller?.stop();
       await Promise.all(watchers.map((w) => w.stop()));
