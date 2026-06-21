@@ -33,12 +33,18 @@ interface WorldStore {
    * and the map filters agents by projectDir.
    */
   selectedProjectDir?: string;
+  /** Id of the AskUserQuestion shown as a centered modal (undefined = closed). */
+  openQuestionId?: string;
+  /** Session ids the app launched via the SDK (drive the reply/stop footer). */
+  sdkSessionIds: Record<string, true>;
   setConnected(connected: boolean): void;
   select(sessionId?: string): void;
   selectBuilding(buildingId?: string): void;
   setAutofollow(on: boolean): void;
   dismissNotification(id: string): void;
   selectProject(projectDir?: string): void;
+  openQuestion(id?: string): void;
+  markSdkSession(sessionId: string): void;
   apply(event: GameEvent): void;
 }
 
@@ -64,6 +70,7 @@ export const useWorld = create<WorldStore>((set) => ({
   autofollow: false,
   arsenal: {},
   pending: {},
+  sdkSessionIds: {},
   setConnected: (connected) => set({ connected }),
   // Unit and building selection are mutually exclusive (one right-side panel).
   // Reset autofollow only when the target CHANGES (opt-in per agent): clicking
@@ -79,6 +86,8 @@ export const useWorld = create<WorldStore>((set) => ({
   dismissNotification: (id) =>
     set((state) => ({ notifications: state.notifications.filter((n) => n.id !== id) })),
   selectProject: (selectedProjectDir) => set({ selectedProjectDir }),
+  openQuestion: (openQuestionId) => set({ openQuestionId }),
+  markSdkSession: (sessionId) => set((s) => ({ sdkSessionIds: { ...s.sdkSessionIds, [sessionId]: true } })),
   apply: (event) =>
     set((state) => {
       switch (event.type) {
@@ -97,6 +106,7 @@ export const useWorld = create<WorldStore>((set) => ({
             ),
             arsenal: Object.fromEntries((event.arsenals ?? []).map((a) => [a.projectDir, a])),
             pending: {},
+            openQuestionId: undefined,
           };
         case 'hero-spawned':
         case 'hero-updated': {
@@ -151,7 +161,7 @@ export const useWorld = create<WorldStore>((set) => ({
         case 'pending-question-resolved': {
           const pending = { ...state.pending };
           delete pending[event.id];
-          return { pending };
+          return { pending, openQuestionId: state.openQuestionId === event.id ? undefined : state.openQuestionId };
         }
         default:
           return state;

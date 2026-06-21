@@ -5,6 +5,7 @@ import { Minimap } from './hud/Minimap';
 import { Portraits } from './hud/Portraits';
 import { ResourceBar } from './hud/ResourceBar';
 import { SidePanel } from './hud/SidePanel';
+import { QuestionModal } from './hud/QuestionModal';
 import { BuildingPanel } from './hud/BuildingPanel';
 import { ThemeSwitch } from './hud/ThemeSwitch';
 import { ZoomControls } from './hud/ZoomControls';
@@ -21,6 +22,7 @@ export function App() {
       <MissionLog />
       <NotificationFeed />
       <SidePanel />
+      <QuestionModal />
       <BuildingPanel />
       <ProjectSwitcher />
       <ArchitectHall />

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { SDK_PERMISSION_MODES, type SdkPermissionMode } from '@agent-citadel/shared';
 import { useUi } from '../i18n';
 import { launchAgent, listDirs, recentDirs, sdkAvailable } from '../sessions';
+import { useWorld } from '../store';
 
 export function LaunchAgentDialog({ onClose }: { onClose: () => void }) {
   const t = useUi();
@@ -21,7 +22,12 @@ export function LaunchAgentDialog({ onClose }: { onClose: () => void }) {
     setBusy(true); setError(null);
     const res = await launchAgent({ cwd, prompt, model: model || undefined, permissionMode: mode });
     setBusy(false);
-    if (res.ok) onClose(); else setError(res.error ?? 'failed');
+    if (res.ok) {
+      if (res.sessionId) useWorld.getState().markSdkSession(res.sessionId);
+      onClose();
+    } else {
+      setError(res.error ?? 'failed');
+    }
   };
 
   return (
