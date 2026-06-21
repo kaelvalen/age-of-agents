@@ -35,6 +35,9 @@ export async function startServer(opts: StartServerOptions): Promise<RunningServ
   const app = Fastify({ logger: { level: 'info' } });
   const world = new World();
   const pendingRegistry = new PendingRegistry(world);
+  world.onEvent((event) => {
+    if (event.type === 'hero-removed') pendingRegistry.cancelForSession(event.sessionId);
+  });
   let watchers: SourceWatcher[] = [];
   let opencodePoller: OpenCodePoller | undefined;
   let dockerPoller: DockerPoller | undefined;

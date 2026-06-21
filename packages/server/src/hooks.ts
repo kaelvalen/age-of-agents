@@ -95,9 +95,9 @@ function settingsPath(): string {
 
 type HookEntry = { matcher?: string; hooks: { type: string; url?: string; command?: string; timeout?: number }[] };
 
-async function readSettings(): Promise<Record<string, any>> {
+async function readSettings(path = settingsPath()): Promise<Record<string, any>> {
   try {
-    return JSON.parse(await readFile(settingsPath(), 'utf8'));
+    return JSON.parse(await readFile(path, 'utf8'));
   } catch {
     return {};
   }
@@ -166,12 +166,12 @@ function isAnyOurs(entry: HookEntry): boolean {
   return isOurs(entry) || isOursCommand(entry);
 }
 
-export async function hooksInstalled(): Promise<boolean> {
-  return (await hooksStatus()).installed;
+export async function hooksInstalled(path = settingsPath()): Promise<boolean> {
+  return (await hooksStatus(path)).installed;
 }
 
-export async function hooksStatus(): Promise<{ installed: boolean; needsMigration: boolean }> {
-  const settings = await readSettings();
+export async function hooksStatus(path = settingsPath()): Promise<{ installed: boolean; needsMigration: boolean }> {
+  const settings = await readSettings(path);
   let hasLegacy = false;
   let hasAny = false;
   const installed = HOOK_EVENTS.every((event) => {
@@ -187,10 +187,9 @@ export async function hooksStatus(): Promise<{ installed: boolean; needsMigratio
   return { installed, needsMigration: hasLegacy || (hasAny && !installed) || preStale };
 }
 
-/** Adds our hooks (merge; does not touch others' entries). Creates backup. */
-export async function installHooks(): Promise<void> {
-  const path = settingsPath();
-  const settings = await readSettings();
+/** Adds our hooks (replace any stale entries; does not touch others' entries). Creates backup. */
+export async function installHooks(path = settingsPath()): Promise<void> {
+  const settings = await readSettings(path);
   try {
     await copyFile(path, join(dirname(path), 'settings.json.citadel-backup'));
   } catch {
@@ -199,22 +198,21 @@ export async function installHooks(): Promise<void> {
   settings.hooks ??= {};
   for (const event of HOOK_EVENTS) {
     const entries: HookEntry[] = (settings.hooks[event] ??= []);
-    if (entries.some(isOursCommand)) continue;
-    settings.hooks[event] = entries.filter((entry) => !isOurs(entry));
+    settings.hooks[event] = entries.filter((entry) => !isAnyOurs(entry));
     settings.hooks[event].push(buildHookEntry(event));
   }
   await writeFile(path, `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
 }
 
-/** Removes only our entries (recognized by URL). */
-export async function uninstallHooks(): Promise<void> {
-  const settings = await readSettings();
+/** Removes only our entries (recognized by URL or command marker). */
+export async function uninstallHooks(path = settingsPath()): Promise<void> {
+  const settings = await readSettings(path);
   if (!settings.hooks) return;
   for (const event of Object.keys(settings.hooks)) {
     settings.hooks[event] = (settings.hooks[event] as HookEntry[]).filter((entry) => !isAnyOurs(entry));
     if (settings.hooks[event].length === 0) delete settings.hooks[event];
   }
-  await writeFile(settingsPath(), `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
+  await writeFile(path, `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
 }
 
 /** Shapes a Claude Code PreToolUse hook decision for stdout / HTTP response. */
