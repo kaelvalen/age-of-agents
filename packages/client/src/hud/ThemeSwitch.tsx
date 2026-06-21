@@ -4,6 +4,7 @@ import { useUi } from '../i18n';
 import { HooksPanel } from './HooksPanel';
 import { PanelControlToggle } from './PanelControlToggle';
 import { SettingsPanel } from './SettingsPanel';
+import { LaunchAgentButton } from './LaunchAgentButton';
 import { useMenuKeyboard } from './useMenuKeyboard';
 
 /** Language dropdown list: endonyms (name in that language) + flag + short code. */
@@ -77,6 +78,7 @@ export function ThemeSwitch() {
       </button>
       <HooksPanel />
       <PanelControlToggle />
+      <LaunchAgentButton />
 
       {/* Language as dropdown instead of a cycling button. */}
       <div ref={langRef} style={{ position: 'relative' }}>
