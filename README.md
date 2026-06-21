@@ -138,6 +138,7 @@ npm run build # production client + bundled CLI (dist/cli.js)
 - The server listens on `127.0.0.1` only — nothing is exposed to your network.
 - Transcripts are read **locally and read-only**; their contents are never written to disk by Age of Agents or sent anywhere.
 - Installing the optional Claude Code hooks modifies `~/.claude/settings.json` (a fast event channel). Demo mode touches nothing of yours.
+- **Optional interactive mode (off by default).** You can let the panel answer Claude Code permission prompts and plan approvals via the local hooks. It stays `127.0.0.1`-only; with the mode off, Age of Agents remains a passive read-only observer. When on, an unanswered prompt (timeout or app closed) always falls back to the terminal — the app never auto-allows. "Always allow" rules live in `~/.age-of-agents/permission-policy.json`; the app never edits the permission rules in `~/.claude/settings.json`.
 
 ## 🎭 Assets
 
