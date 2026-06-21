@@ -5,6 +5,7 @@ import { HooksPanel } from './HooksPanel';
 import { PanelControlToggle } from './PanelControlToggle';
 import { SettingsPanel } from './SettingsPanel';
 import { LaunchAgentButton } from './LaunchAgentButton';
+import { ProjectSwitcher } from './ProjectSwitcher';
 import { useMenuKeyboard } from './useMenuKeyboard';
 
 /** Language dropdown list: endonyms (name in that language) + flag + short code. */
@@ -76,6 +77,9 @@ export function ThemeSwitch() {
       >
         {barCollapsed ? '☰' : '◂'}
       </button>
+      {/* Kingdom switcher stays visible even when the bar is collapsed (it carries
+          the live session summary); merged here so it never overlaps the toolbar. */}
+      <ProjectSwitcher inline />
       {!barCollapsed && (
         <>
       <button

@@ -9,7 +9,6 @@ import { QuestionModal } from './hud/QuestionModal';
 import { BuildingPanel } from './hud/BuildingPanel';
 import { ThemeSwitch } from './hud/ThemeSwitch';
 import { ZoomControls } from './hud/ZoomControls';
-import { ProjectSwitcher } from './hud/ProjectSwitcher';
 import { ArchitectHall } from './hud/ArchitectHall';
 import './hud/hud.css';
 
@@ -24,7 +23,6 @@ export function App() {
       <SidePanel />
       <QuestionModal />
       <BuildingPanel />
-      <ProjectSwitcher />
       <ArchitectHall />
       <Portraits />
       <ZoomControls />

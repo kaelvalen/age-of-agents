@@ -66,7 +66,7 @@ interface CityInfo {
  *  agents finish, the city disappears from the list. Closing: outside click, Esc,
  *  city selection.
  */
-export function ProjectSwitcher() {
+export function ProjectSwitcher({ inline = false }: { inline?: boolean } = {}) {
   const heroes = useWorld((s) => s.heroes);
   const selected = useWorld((s) => s.selectedProjectDir);
   const selectProject = useWorld((s) => s.selectProject);
@@ -159,16 +159,12 @@ export function ProjectSwitcher() {
   return (
     <div
       ref={rootRef}
-      className="hud-panel px"
-      style={{
-        position: 'absolute',
-        top: 12,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        padding: 0,
-        zIndex: 20,
-        maxWidth: '92vw',
-      }}
+      className={inline ? 'px' : 'hud-panel px'}
+      style={
+        inline
+          ? { position: 'relative', padding: 0 }
+          : { position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', padding: 0, zIndex: 20, maxWidth: '92vw' }
+      }
     >
       {/* Compact clickable trigger. */}
       <button
@@ -226,7 +222,7 @@ export function ProjectSwitcher() {
 
       {/* Expanded city list. */}
       {open && (
-        <div ref={menuRef} className="hud-panel px proj-dropdown" id="proj-city-menu" role="menu" aria-label={t.cities}>
+        <div ref={menuRef} className="hud-panel px proj-dropdown" id="proj-city-menu" role="menu" aria-label={t.cities} style={inline ? { left: 0, transform: 'none' } : undefined}>
           <OptionRow
             icon="🌍"
             label={t.allCities}
