@@ -7,6 +7,8 @@ export {
   isSpriteId,
   matchModel,
   resolveSprite,
+  resolveSpriteCandidates,
+  pickSprite,
   resolveContextWindow,
   resolveModel,
   DEFAULT_MODEL_CONFIG,
