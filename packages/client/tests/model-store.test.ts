@@ -1,3 +1,4 @@
+import './_setup-localstorage'; // must precede the model-store import (settings.ts reads localStorage at init)
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useModels, resolveModelLive } from '../src/model-store';
 import { DEFAULT_MODEL_CONFIG, type ModelConfig } from '../src/theme/models';

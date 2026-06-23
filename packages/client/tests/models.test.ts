@@ -31,7 +31,9 @@ describe('resolveSprite (DEFAULT)', () => {
     expect(resolveSprite('claude-opus-4-8[1m]', DEFAULT_MODEL_CONFIG).sprite).toBe('opus');
   });
   it('unknown model -> fallback sprite', () => {
-    expect(resolveSprite('llama3.1:8b', DEFAULT_MODEL_CONFIG).sprite).toBe('sonnet');
+    // NB: llama/qwen/etc. now map to the dedicated 'local' sprite, so use a
+    // genuinely unrecognized id to exercise the fallback.
+    expect(resolveSprite('nope-xyz', DEFAULT_MODEL_CONFIG).sprite).toBe('sonnet');
   });
   it('returns display name', () => {
     expect(resolveSprite('claude-sonnet-4-6', DEFAULT_MODEL_CONFIG).displayName).toBe('Sonnet 4.6');
