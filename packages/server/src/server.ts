@@ -40,7 +40,15 @@ export interface RunningServer {
 
 export async function startServer(opts: StartServerOptions): Promise<RunningServer> {
   const host = opts.host ?? '127.0.0.1';
+  const LOOPBACK = new Set(['127.0.0.1', '::1', 'localhost']);
+  if (!LOOPBACK.has(host) && process.env.AOA_ALLOW_REMOTE !== '1') {
+    throw new Error(
+      `Refusing to bind to non-loopback host "${host}": the server has no transport ` +
+      `encryption and is meant for local use. Set AOA_ALLOW_REMOTE=1 to override.`,
+    );
+  }
   const app = Fastify({ logger: { level: 'info' } });
+  if (!LOOPBACK.has(host)) app.log.warn(`Binding to non-loopback host ${host} (AOA_ALLOW_REMOTE=1)`);
   const token = await loadOrCreateToken(opts.tokenPath);
   let resolvedPort = opts.port;
   registerSecurityGuard(app, { getPort: () => resolvedPort, token });
