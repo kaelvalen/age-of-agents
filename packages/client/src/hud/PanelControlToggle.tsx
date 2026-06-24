@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { PermissionPolicy } from '@agent-citadel/shared';
 import { useUi } from '../i18n';
+import { apiFetch } from '../api';
 
 /** Global ON/OFF for panel-based answering. Reads/writes /permission-policy. */
 export function PanelControlToggle() {
@@ -21,7 +22,7 @@ export function PanelControlToggle() {
     setBusy(true);
     try {
       const next = { ...policy, enabled: !policy.enabled };
-      const res = await fetch('/permission-policy', {
+      const res = await apiFetch('/permission-policy', {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(next),

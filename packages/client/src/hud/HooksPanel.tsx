@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useUi } from '../i18n';
+import { apiFetch } from '../api';
 
 type Status = 'loading' | 'installed' | 'legacy' | 'absent' | 'demo' | 'error';
 
@@ -34,7 +35,7 @@ export function HooksPanel() {
     if (!window.confirm(message)) return;
     setBusy(true);
     try {
-      await fetch(installing ? '/hooks/install' : '/hooks/uninstall', { method: 'POST' });
+      await apiFetch(installing ? '/hooks/install' : '/hooks/uninstall', { method: 'POST' });
       await refresh();
     } finally {
       setBusy(false);

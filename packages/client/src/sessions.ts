@@ -1,10 +1,11 @@
 import type { LaunchAgentRequest } from '@agent-citadel/shared';
+import { apiFetch } from './api';
 
 const RECENT_KEY = 'agent-citadel.recent-dirs';
 
 export async function launchAgent(req: LaunchAgentRequest): Promise<{ ok: boolean; sessionId?: string; error?: string }> {
   try {
-    const res = await fetch('/sessions/launch', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(req) });
+    const res = await apiFetch('/sessions/launch', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(req) });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) return { ok: false, error: body.error ?? `HTTP ${res.status}` };
     rememberDir(req.cwd);
@@ -15,11 +16,11 @@ export async function launchAgent(req: LaunchAgentRequest): Promise<{ ok: boolea
 }
 
 export async function stopSession(sessionId: string): Promise<void> {
-  await fetch(`/sessions/${encodeURIComponent(sessionId)}/stop`, { method: 'POST' }).catch(() => {});
+  await apiFetch(`/sessions/${encodeURIComponent(sessionId)}/stop`, { method: 'POST' }).catch(() => {});
 }
 
 export async function sendSessionMessage(sessionId: string, text: string): Promise<void> {
-  await fetch(`/sessions/${encodeURIComponent(sessionId)}/message`, {
+  await apiFetch(`/sessions/${encodeURIComponent(sessionId)}/message`, {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text }),
   }).catch(() => {});
 }
@@ -41,7 +42,7 @@ export async function sessionsStatus(): Promise<{ available: boolean; authConfig
 }
 
 export async function listDirs(dir?: string): Promise<{ dir: string; parent: string | null; entries: { name: string; path: string }[] }> {
-  const r = await fetch(`/fs/list${dir ? `?dir=${encodeURIComponent(dir)}` : ''}`);
+  const r = await apiFetch(`/fs/list${dir ? `?dir=${encodeURIComponent(dir)}` : ''}`);
   if (!r.ok) throw new Error('cannot list');
   return r.json();
 }

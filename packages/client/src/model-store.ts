@@ -12,6 +12,7 @@ import {
   type SpriteId,
 } from './theme/models';
 import { useSettings } from './settings';
+import { apiFetch } from './api';
 
 /**
  * Editable model-registry store. The local server is the source of truth (file),
@@ -44,7 +45,7 @@ function writeCache(config: ModelConfig): void {
 function putModels(config: ModelConfig): void {
   if (typeof fetch === 'undefined') return;
   try {
-    fetch('/model-config', {
+    apiFetch('/model-config', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(config),

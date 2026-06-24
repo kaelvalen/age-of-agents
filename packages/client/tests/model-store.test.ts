@@ -23,11 +23,14 @@ describe('useModels store', () => {
   it('defaults to DEFAULT_MODEL_CONFIG', () => {
     expect(useModels.getState().models).toEqual(DEFAULT_MODEL_CONFIG);
   });
-  it('setModels updates state and sends PUT /model-config', () => {
-    const f = vi.fn(() => Promise.resolve(new Response('{}')));
+  it('setModels updates state and sends PUT /model-config (with session token)', async () => {
+    const f = vi.fn((url: string) =>
+      Promise.resolve(new Response(url === '/session-token' ? JSON.stringify({ token: 'T' }) : '{}')),
+    );
     vi.stubGlobal('fetch', f);
     useModels.getState().setModels(CUSTOM);
-    expect(useModels.getState().models).toEqual(CUSTOM);
+    expect(useModels.getState().models).toEqual(CUSTOM); // state is synchronous
+    await new Promise((r) => setTimeout(r, 0)); // token fetch + async PUT are fire-and-forget
     expect(f).toHaveBeenCalledWith('/model-config', expect.objectContaining({ method: 'PUT' }));
   });
   it('resetModels restores DEFAULT', () => {

@@ -6,6 +6,7 @@ import {
   type MappingConfig,
   type BuildingId,
 } from './theme/mapping';
+import { apiFetch } from './api';
 
 /**
  * Editable tool->building map store. The local server is the source of truth
@@ -42,7 +43,7 @@ function writeCache(config: MappingConfig): void {
 function putMapping(config: MappingConfig): void {
   if (typeof fetch === 'undefined') return;
   try {
-    fetch('/tool-mapping', {
+    apiFetch('/tool-mapping', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(config),

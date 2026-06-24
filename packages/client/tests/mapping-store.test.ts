@@ -28,10 +28,13 @@ describe('useMapping store', () => {
     expect(useMapping.getState().mapping).toEqual(CUSTOM);
   });
 
-  it('setMapping sends PUT /tool-mapping', () => {
-    const f = vi.fn(() => Promise.resolve(new Response('{}')));
+  it('setMapping sends PUT /tool-mapping (with session token)', async () => {
+    const f = vi.fn((url: string) =>
+      Promise.resolve(new Response(url === '/session-token' ? JSON.stringify({ token: 'T' }) : '{}')),
+    );
     vi.stubGlobal('fetch', f);
     useMapping.getState().setMapping(CUSTOM);
+    await new Promise((r) => setTimeout(r, 0)); // token fetch + async PUT are fire-and-forget
     expect(f).toHaveBeenCalledWith('/tool-mapping', expect.objectContaining({ method: 'PUT' }));
   });
 

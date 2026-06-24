@@ -1,15 +1,17 @@
 import { WS_PATH, type GameEvent, type QuestionAnswer } from '@agent-citadel/shared';
 import { useWorld } from './store';
+import { getToken } from './api';
 
 let current: WebSocket | undefined;
 
 /** WS connection with auto-reconnect; the snapshot on each connection overwrites state. */
 export function connectWorld(): void {
   const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  const url = `${protocol}://${location.host}${WS_PATH}`;
   let retryMs = 1000;
 
-  const open = () => {
+  const open = async () => {
+    const token = await getToken();
+    const url = `${protocol}://${location.host}${WS_PATH}?token=${encodeURIComponent(token)}`;
     const socket = new WebSocket(url);
     current = socket;
     socket.onopen = () => {
@@ -28,7 +30,7 @@ export function connectWorld(): void {
     };
   };
 
-  open();
+  void open();
 }
 
 /** Sends a panel answer to a pending agent question. No-op if disconnected. */
