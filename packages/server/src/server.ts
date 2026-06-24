@@ -14,6 +14,8 @@ import { registerPermissionPolicyRoutes } from './permission-policy-routes.js';
 import { LiveSessionRegistry } from './sdk/sessions.js';
 import { registerSessionRoutes } from './session-routes.js';
 import { registerFsRoutes } from './fs-routes.js';
+import { loadOrCreateToken } from './security/token.js';
+import { registerSecurityGuard } from './security/guard.js';
 
 export interface StartServerOptions {
   /** HTTP port. Pass 0 so the system picks a free one (useful in tests). */
@@ -25,17 +27,23 @@ export interface StartServerOptions {
   webRoot?: string;
   /** Override permission-policy file path (tests). Defaults to ~/.age-of-agents. */
   policyPath?: string;
+  /** Override session-token file path (tests). Defaults to ~/.age-of-agents/session-token. */
+  tokenPath?: string;
 }
 
 export interface RunningServer {
   url: string;
   port: number;
+  token: string;
   close: () => Promise<void>;
 }
 
 export async function startServer(opts: StartServerOptions): Promise<RunningServer> {
   const host = opts.host ?? '127.0.0.1';
   const app = Fastify({ logger: { level: 'info' } });
+  const token = await loadOrCreateToken(opts.tokenPath);
+  let resolvedPort = opts.port;
+  registerSecurityGuard(app, { getPort: () => resolvedPort, token });
   const world = new World();
   const pendingRegistry = new PendingRegistry(world);
   world.onEvent((event) => {
@@ -138,6 +146,9 @@ export async function startServer(opts: StartServerOptions): Promise<RunningServ
     });
   }
 
+  // Issued only to allowlisted origins (the guard rejects foreign Origins first).
+  app.get('/session-token', async () => ({ token }));
+
   // Serwowanie zbudowanego klienta — tylko w dystrybucji; w dev robi to Vite.
   if (opts.webRoot) {
     const fastifyStatic = (await import('@fastify/static')).default;
@@ -154,6 +165,7 @@ export async function startServer(opts: StartServerOptions): Promise<RunningServ
 
   const address = app.server.address();
   const actualPort = typeof address === 'object' && address ? address.port : opts.port;
+  resolvedPort = actualPort;
 
   const wss = new WebSocketServer({ server: app.server, path: WS_PATH });
 
@@ -196,6 +208,7 @@ export async function startServer(opts: StartServerOptions): Promise<RunningServ
   return {
     url,
     port: actualPort,
+    token,
     close: async () => {
       offEvent();
       await liveSessions?.stopAll();
